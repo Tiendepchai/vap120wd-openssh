@@ -1,0 +1,227 @@
+<%+header%>
+<%
+local ip = require "luci.ip"
+local util = require "luci.util"
+local uci =  require("luci.model.uci").cursor()
+local stat = require "luci.tools.status"
+local dhcp_list = stat.dhcp_leases()
+
+local enable_dmz = uci:get("firewall", "dmz", "enabled")
+local dest_ip_dmz = uci:get("firewall", "dmz", "dest_ip")
+local is_neighbour_ip = false
+
+local neighbors_tbl = {}
+for _, v in ipairs(ip.neighbors({ family = 4 })) do
+    if v.mac and v.dev == "br-lan" then
+        v.name = "Unknown"
+        for _, dhcp_entry in pairs(dhcp_list) do
+            if type(dhcp_entry) == "table" and tostring(dhcp_entry.macaddr) == tostring(v.mac) and dhcp_entry.hostname then
+                v.name = tostring(dhcp_entry.hostname)
+            end
+        end
+        table.insert(neighbors_tbl, v)
+        if tostring(dest_ip_dmz) == tostring(v.dest) then
+            is_neighbour_ip = true
+        end
+    end
+end
+
+util.dumptable(neighbors_tbl, nil,nil,nil)
+table.sort(neighbors_tbl, function(k1, k2) return k1.mac < k2.mac end)
+
+%>
+
+<script src="/luci-static/resources/monCon.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+
+<style>
+
+    .warn-text
+    {
+        padding-left: 15px;
+        color: red;
+    }
+    @media (min-width: 576px) 
+    {
+        .form-inline label
+        {
+            justify-content: left;
+        }
+    }
+
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+
+    h3, h4, h5, h6
+    {
+    font-weight: normal;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    function validate_ipv4(str) {
+        // Regular expression to check if string is a IP address
+        const regexExp = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi;
+
+        return regexExp.test(str);
+    }
+
+    function check_enable_dmz(){
+        if(document.dmz_form.cb_enable_dmz.checked)
+        {
+            $('#select_div').show();                 
+        }
+        else{
+            $('#select_div').hide();     
+        }
+    }
+
+    function onload_function(){
+    <%
+    if dest_ip_dmz then
+        if is_neighbour_ip == true then
+    %>
+        document.getElementById("dest_ip").value= "<%=tostring(dest_ip_dmz)%>";
+        <%else%>
+
+        var opt = " option[value='custom_opt']";
+        $("#dest_ip" + opt).remove();
+        $("#dest_ip").append($('<option>', {
+            value: "custom_opt",
+            text: "<%=dest_ip_dmz%>"
+        }));
+        document.getElementById("dest_ip").value= "custom_opt";
+
+        <%end%>
+    <%end%>
+
+    <%if enable_dmz == "1" then%>
+        document.getElementById("cb_enable_dmz").checked = true;  
+    <%else%>
+        document.getElementById("cb_enable_dmz").checked = false;
+    <%end%>
+        check_enable_dmz();  
+
+    }
+
+    function check_dst_ip_opt(){
+        console.log("huhu");
+        var x = document.getElementById("dest_ip").value;
+        if(x == "custom"){
+            $("#dest_ip").hide();
+            $("#other_ip").show();
+            $("#other_ip").focus();
+        }
+        else{
+            $("#dest_ip").show();
+            $("#other_ip").hide(); 
+        }
+    }
+
+
+    function verify_custom_ip(){
+        var myInput = document.getElementById("other_ip");
+            if(myInput && myInput.value){
+                var opt = " option[value='custom_opt']";
+                $("#dest_ip" + opt).remove();
+                $("#dest_ip").append($('<option>', {
+                    value: "custom_opt",
+                    text: myInput.value
+                }));
+            document.getElementById("dest_ip").value= "custom_opt";
+            }
+            else{
+                document.getElementById("dest_ip").value= "<%=tostring(neighbors_tbl[1].mac)%>";
+            }
+            $("#dest_ip").html($("#dest_ip option").sort(function (a, b) {
+                return a.text == b.text ? 0 : a.text > b.text ? -1 : 1
+            }))
+            
+            $("#other_ip").hide();
+            $("#dest_ip").show(); 
+    }
+
+    function validate_form(){
+        var r = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
+
+        var str = $("#dest_ip option:selected").text()
+        var ip = str.match(r);
+
+        if(!document.dmz_form.cb_enable_dmz.checked)
+            return true;
+            
+        if(ip == null){
+            alert("Invalid IP address");
+            return false;
+        }
+
+        if(validate_ipv4(ip) == false){
+            alert("Invalid IP address");
+            return false;
+        }
+        $("#submit_ip").val(ip);
+        return true;
+    }
+
+    window.onload = function () {
+        //AP-504
+        if (window.location.href.indexOf("stok") > 0)
+            setupTimers();
+
+        onload_function();
+    }
+
+</script>
+
+<form method="post" id="dmz_form" name="dmz_form" class="form-inline" action="<%=luci.dispatcher.build_url("admin", "app", "dmz", "apply")%>" onsubmit="return validate_form()" autocomplete="false">
+    <div class="widget col-xs-12 col-lg-12 mb-5"> 
+        <legend><h2>DMZ</h2></legend>
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="col-lg-12 mb-3">
+                <div class="form-group mb-2">
+                    <label for="cb_enable_dmz" class="col-lg-3">Enable</label>        
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="cb_enable_dmz" id="cb_enable_dmz" onchange="check_enable_dmz()">
+                        <span class="slider"></span>
+                    </label>
+                </div> 
+
+                <div class="form-group mb-2" style="display:none" id="select_div">
+                    <label for="dest_ip" class="col-lg-3">Destination IP</label>
+                    <select class="form-select" name="dest_ip" id="dest_ip" onchange="check_dst_ip_opt()">
+                        <option  value="custom" onclick="check_dst_ip_opt()">-- custom --</option>
+                    <%for _,v in pairs(neighbors_tbl) do%>
+                        <option value="<%=v.dest%>"><%=v.dest%> (<%=v.name%>)</option>
+                    <%end%>
+                    </select>
+                    <input type="text" maxLength=16 size=16 style="display: none;" id="other_ip" onfocusout="verify_custom_ip()">
+
+                    <input type="text" style="display: none;" name="submit_ip" id="submit_ip"> 
+                </div>
+            </fieldset>
+        </div>
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" id="appply_btn" type="submit" value="Apply">
+        </div>
+    </div>
+</form>
+
+
+<%+footer%>

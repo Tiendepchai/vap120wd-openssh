@@ -1,0 +1,17 @@
+OEM-rootfs/usr/sbin/setpassadmin
+OEM-rootfs/usr/lib/opkg/status
+OEM-rootfs/usr/lib/opkg/info/libopenssl.control
+OEM-rootfs/usr/lib/opkg/info/libustream-openssl.control
+OEM-rootfs/usr/lib/opkg/info/lighttpd.list
+OEM-rootfs/usr/lib/opkg/info/openssl-util.list
+OEM-rootfs/usr/lib/opkg/info/libssh2.control
+OEM-rootfs/usr/lib/opkg/info/openssl-util.control
+OEM-rootfs/usr/lib/opkg/info/libmosquitto-ssl.control
+OEM-rootfs/usr/lib/opkg/info/openssl-util.conffiles
+OEM-rootfs/usr/lib/opkg/info/obuspa.control
+OEM-rootfs/usr/lib/opkg/info/lighttpd.control
+OEM-rootfs/usr/lib/opkg/info/uhttpd-mod-tls.control
+OEM-rootfs/etc/ssl/openssl.cnf
+OEM-rootfs/etc/lighttpd/lighttpd_smartalert.conf
+OEM-rootfs/etc/lighttpd/lighttpd.conf
+OEM-rootfs/etc/openwrt.config

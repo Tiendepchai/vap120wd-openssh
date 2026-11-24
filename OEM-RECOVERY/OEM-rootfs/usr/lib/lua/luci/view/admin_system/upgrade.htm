@@ -1,0 +1,122 @@
+<%#
+ Copyright 2008 Steven Barth <steven@midlink.org>
+ Copyright 2008-2009 Jo-Philipp Wich <jow@openwrt.org>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%+header%>
+<style>
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+
+    .quick-setup-cancel
+    {
+        color: black;
+        padding: 5px 14px 6px;
+        background-color: #e6e6e6;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+
+	h3, h4, h5, h6
+    {
+    font-weight: normal;
+    }
+</style>
+
+
+<script src="/luci-static/resources/monCon.js"></script>
+<script src="/luci-static/resources/util.js"></script>
+<script type="text/javascript" src="/luci-static/resources/cbi.js?v=git-17.250.41546-90ac861"></script>
+
+<script type="text/javascript">
+	function preApply(){
+		$('<input>').attr({
+			type: 'hidden',
+			name: 'step',
+			value: '2'
+		}).appendTo('form');
+
+		$('<input>').attr({
+			type: 'hidden',
+			name: 'keep',
+			value: <%=keep and '1' or ''%>
+		}).appendTo('form');
+	}
+
+</script>
+
+<form id="upgrade_form" class="form-inline" action="<%=REQUEST_URI%>" method="post">
+
+	<div class="widget col-xs-12 col-lg-12 mb-3"> 
+		<legend><h2><a id="content" name="content">Upgrade Firmware - Verify</a></h2></legend> 
+		<div class="d-flex flex-wrap widget-body">
+			<% if storage > 0 and size > storage then %>
+				<legend><h5>The image does not fit into the flash memory, please verify the image file!</h5></legend>
+
+			<%else%>
+				<legend><h5>If you are sure to upgrade the firmware for this device, click "Apply" to begin the process.</h5></legend>
+			<% end %>
+
+			<!-- <fieldset class="cbi-section">
+				<ul>
+					<li><%:Checksum%>: <code><%=checksum%></code></li>
+					<li><%:Size%>: <%
+						local w = require "luci.tools.webadmin"
+						write(w.byte_format(size))
+			
+						if storage > 0 then
+							write(luci.i18n.translatef(
+								" (%s available)",
+								w.byte_format(storage)
+							))
+						end
+					%></li>
+					<li><% if keep then %>
+						<%:Configuration files will be kept.%>
+					<% else %>
+						<%:Note: Configuration files will be erased.%>
+					<% end %></li>
+				</ul>
+			</fieldset> -->
+			
+		</div>
+	</div>
+
+	<div class="col-lg-6">
+		<div class="row justify-content-center">
+			<button class="quick-setup-cancel" type="submit" style="width:80px;">Cancel</button>    
+		</div>
+	</div>
+	<div class="col-lg-6">
+		<div class="row justify-content-center">
+			<button class="quick-setup-apply" type="submit" style="width:80px;" onclick="preApply()">Apply</button>   
+		</div>
+	</div>
+</form>
+
+<%+footer%>

@@ -1,0 +1,8 @@
+Package: backup_log
+Version: 1.0
+Depends: libc
+Source: package/viettel/backup_log
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 1582
+Description:  config VTAP backup_log

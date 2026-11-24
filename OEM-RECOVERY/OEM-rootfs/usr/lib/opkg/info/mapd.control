@@ -1,0 +1,8 @@
+Package: mapd
+Version: 1
+Depends: libc, wapp, 1905daemon, libmapd, libllcfg, libubox, libubus, libblobmsg-json, libpthread
+Source: package/mtk/applications/mapd
+Section: MTK Properties
+Architecture: ramips_24kec
+Installed-Size: 408604
+Description:  wifi app daemon

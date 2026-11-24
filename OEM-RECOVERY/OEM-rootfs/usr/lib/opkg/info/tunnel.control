@@ -1,0 +1,8 @@
+Package: tunnel
+Version: 1
+Depends: libc
+Source: package/viettel/tunnel
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 1331
+Description:  SSH tunnel

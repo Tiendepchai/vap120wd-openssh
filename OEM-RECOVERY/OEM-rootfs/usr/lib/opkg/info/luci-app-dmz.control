@@ -1,0 +1,8 @@
+Package: luci-app-dmz
+Version: git-23.297.13754-512d2bbdb-1
+Depends: libc
+Source: package/mtk/ui/luci-mtk/luci-app-dmz
+Section: luci
+Architecture: all
+Installed-Size: 4973
+Description:  DMZ application

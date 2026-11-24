@@ -1,0 +1,8 @@
+Package: kmod-mapfilter
+Version: 3.10.108-1
+Depends: kernel (=3.10.108-1-f0a7ae6eb97201df6f6862f8a1775a51)
+Source: package/mtk/drivers/mapfilter
+Section: kernel
+Architecture: ramips_24kec
+Installed-Size: 6117
+Description:  MTK map filter

@@ -1,0 +1,10 @@
+Package: kmod-nls-iso8859-1
+Version: 3.10.108-1
+Depends: kernel (=3.10.108-1-f0a7ae6eb97201df6f6862f8a1775a51), kmod-nls-base
+Source: package/kernel/linux
+License: GPLv2
+Section: kernel
+Status: unknown hold not-installed
+Architecture: ramips_24kec
+Installed-Size: 1767
+Description:  Kernel module for NLS ISO 8859-1 (Latin 1)

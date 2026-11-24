@@ -1,0 +1,149 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+FACTORY_CONFIG_TEMP_PATH='/usr/etc/obuspa_factory_reset_template.txt'
+FACTORY_CONFIG_PATH='/usr/etc/obuspa_factory.txt'
+GREP_FILE="/tmp/obuspa-test.grep"
+
+DB_PATH="/etc/usp.db"
+COMMAND="/usr/bin/obuspa -f ${DB_PATH} -r ${FACTORY_CONFIG_PATH}"
+PROG="${COMMAND}"
+
+MQTT_PATH="Device.MQTT.Client.1."
+BULKDATA_PROFILE1_PATH="Device.BulkData.Profile.1."
+BULKDATA_PROFILE2_PATH="Device.BulkData.Profile.2."
+
+log() {
+	echo "${@}"|logger -t obuspa -p debug
+}
+
+factory_config_set() {
+	echo "${1} ${2}" >> ${FACTORY_CONFIG_PATH}
+}
+
+validate_mqtt_section() {
+    uci_validate_section obuspa mqtt "${1}" \
+		'enable:bool:true' \
+		'broker_address:string:"homewifi3.viettel.vn"' \
+		'broker_port:string:"STOMP"' \
+		'username:string:"vht-tms-agent"' \
+		'password:string:"YCLR7dh7)&e^9$5Z"' \
+		'transport_protocol:string:TLS'
+}
+
+validate_bukldata_section() {
+    uci_validate_section obuspa mqtt "${1}" \
+		'enable:bool:true' \
+		'url:string:"http://homewifi3.viettel.vn:80/bulkdata"'
+}
+
+validate_log_section() {
+    uci_validate_section obuspa log "${1}" \
+		'level:integer:0' \
+		'output:string:"none"' \
+		'prototrace:bool:false'
+}
+
+
+configure_mqtt() {
+    local enable broker_address broker_port username password transport_protocol
+
+    validate_mqtt_section "${1}" || {
+        log "Validation of mqtt section failed"
+		return 1;
+    }
+
+    factory_config_set "${MQTT_PATH}Enable" ${enable}
+    factory_config_set "${MQTT_PATH}BrokerAddress" ${broker_address}
+    factory_config_set "${MQTT_PATH}BrokerPort" ${broker_port}
+    factory_config_set "${MQTT_PATH}Username" ${username}
+    factory_config_set "${MQTT_PATH}Password" ${password}
+    factory_config_set "${MQTT_PATH}TransportProtocol" ${transport_protocol}
+}
+
+configure_bulkdata() {
+    local enable url
+
+    validate_bukldata_section "${1}" || {
+        log "Validation of bulkdata section failed"
+		return 1;
+    }
+
+    factory_config_set "${BULKDATA_PROFILE1_PATH}Enable" ${enable}
+    factory_config_set "${BULKDATA_PROFILE1_PATH}HTTP.URL" ${url}
+	factory_config_set "${BULKDATA_PROFILE2_PATH}Enable" ${enable}
+    factory_config_set "${BULKDATA_PROFILE2_PATH}HTTP.URL" ${url}
+}
+
+configure_log() {
+    local level output prototrace
+
+    validate_log_section "${1}" || {
+        log "Validation of log section failed"
+		return 1;
+    }
+
+	PROG="${COMMAND} -v${level}"
+
+	[ $prototrace == 1 ] && {
+		PROG="${PROG} -p"
+	}
+
+	# output could be "syslog" or "sdtout" or a file path
+	PROG="${PROG} -l $output"
+}
+
+init() {
+    cp ${FACTORY_CONFIG_TEMP_PATH} ${FACTORY_CONFIG_PATH}
+
+    config_load obuspa
+	config_foreach configure_log log
+	config_foreach configure_mqtt mqtt
+	config_foreach configure_bulkdata bulkdata
+
+    #Add a flag to indicate a Factory config load is commplete 
+    factory_config_set "Internal.FactoryComplete" "true"
+}
+
+obuspa_command() {
+	PROG="${COMMAND} -c $*"
+	eval ${PROG}
+}
+
+start_dns_parser() {
+	[ -f "/usr/bin/lock/generate_lock_config.sh" ] && {
+		lock_status=$(cof_cli read LockStatus)
+		if [ "$lock_status" = "1" ];then
+			/usr/bin/dns_parser &
+			uci set smartalert.main.enable=1
+  			uci commit smartalert
+  			/usr/sbin/lighttpd -f /etc/lighttpd/lighttpd_smartalert.conf &
+		else
+		  	uci set smartalert.main.enable=0
+  			uci commit smartalert
+		fi
+	}
+}
+
+start_service() {
+    [ -z "$(ls /etc/config/obuspa)" ] && return 1
+	
+    init
+
+	echo ${PROG}
+	procd_open_instance
+	procd_set_param command ${PROG}
+	procd_set_param respawn
+	procd_close_instance
+}
+
+stop_service() {
+    obuspa_command stop
+}
+
+reload_service() {
+	stop
+	start
+}

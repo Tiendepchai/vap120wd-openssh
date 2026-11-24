@@ -1,0 +1,3 @@
+/usr/sbin/backup_log
+/usr/sbin/backup_log_when_downloading_log_from_web.sh
+/usr/sbin/simulate_generate_log.sh

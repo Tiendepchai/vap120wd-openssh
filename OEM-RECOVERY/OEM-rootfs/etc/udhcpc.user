@@ -1,0 +1,30 @@
+DHCP_POOL="lan"
+DHCPC_EVENT="${1}"
+DNS_SERV="${dns}"
+case ${DHCPC_EVENT} in
+(bound|renew) ;;
+(*) exit 0 ;;
+esac
+for DHCP_POOL in ${DHCP_POOL}
+do 
+    DHCP_OPT="$(uci -q get dhcp.${DHCP_POOL}.dhcp_option)"
+    logger "[fanwar] dhcpopt= ${DHCP_OPT}"
+    if [ -z "${DHCP_OPT}" ]; then
+        uci set dhcp.${DHCP_POOL}.dhcp_option="6,${DNS_SERV// /,}"
+        uci commit dhcp
+        /etc/init.d/dnsmasq restart
+        logger "[fanwar] write dns ${DNS_SERV}"
+    else
+        for DHCP_OPT in ${DHCP_OPT}
+        do 
+            if [ "${DHCP_OPT%%,*}" = "6" -a "${DHCP_OPT}" != "6,${DNS_SERV// /,}" ]; then 
+                uci set dhcp.${DHCP_POOL}.dhcp_option="6,${DNS_SERV// /,}"
+                uci commit dhcp
+                /etc/init.d/dnsmasq restart
+                logger "[fanwar] write dns ${DNS_SERV}"
+            else
+                logger "[fanwar] do not write dns ${DNS_SERV}"
+            fi
+        done
+    fi
+done

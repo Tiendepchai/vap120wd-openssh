@@ -1,0 +1,107 @@
+<%#
+ Copyright 2010 Jo-Philipp Wich <jow@openwrt.org>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%+header%>
+
+<%
+local fs   = require "nixio.fs"
+--local has_ping6 = fs.access("/bin/ping6") or fs.access("/usr/bin/ping6")
+--local has_traceroute6 = fs.access("/usr/bin/traceroute6")
+local has_ping6 = false
+local has_traceroute6 = false
+%>
+
+<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript">//<![CDATA[
+	var stxhr = new XHR();
+
+	function update_status(field, proto)
+	{
+		var tool = field.name;
+		var addr = field.value;
+		var protocol = proto ? "6" : "";
+
+		var legend = document.getElementById('diag-rc-legend');
+		var output = document.getElementById('diag-rc-output');
+
+		if (legend && output)
+		{
+			output.innerHTML =
+				'<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" /> ' +
+				'<%:Waiting for command to complete...%>'
+			;
+
+			legend.parentNode.style.display = 'block';
+			legend.style.display = 'inline';
+
+			stxhr.get('<%=luci.dispatcher.build_url("admin", "app")%>/diag_' + tool + protocol + '/' + addr, null,
+				function(x)
+				{
+					if (x.responseText)
+					{
+						// legend.style.display = 'block';
+                        document.getElementById("result_widget").style.display = 'block';
+						output.innerHTML = String.format('<pre>%h</pre>', x.responseText);
+					}
+					else
+					{
+						// legend.style.display = 'none';
+                        document.getElementById("result_widget").style.display = 'none';
+						output.innerHTML = '<span class="error"><%:Bad address specified!%></span>';
+					}
+				}
+			);
+		}
+	}
+//]]></script>
+
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="widget col-xs-12 col-lg-12 mb-5"> 
+		<legend><h2>Diagnostics</h2></legend>
+		<div class="d-flex flex-wrap widget-body">
+			<fieldset class="col-lg-12 mb-3 row">
+				<div class="col-lg-6 justify-content-center">
+					<input class="mb-2" type="text" value="google.com" name="ping" /><br />
+					<% if has_ping6 then %>
+					<select name="ping_proto"  class="form-select">
+						<option value="" selected="selected"><%:IPv4%></option>
+						<option value="6"><%:IPv6%></option>
+					</select>
+					<span class="form-btn form-btn-apply"><input type="button" value="<%:Ping%>" class="cbi-button" onclick="update_status(this.form.ping, this.form.ping_proto.selectedIndex)" /></span>
+					<% else %>
+					<span class="form-btn form-btn-apply"><input type="button" value="<%:Ping%>" class="cbi-button" onclick="update_status(this.form.ping)" /></span>
+					<% end %>
+				</div>
+
+				<div class="col-lg-6 justify-content-center">
+					<input class="mb-2" type="text" value="google.com" name="traceroute" /><br />
+					<% if has_traceroute6 then %>
+					<select name="traceroute_proto" class="form-select">
+						<option value="" selected="selected"><%:IPv4%></option>
+						<option value="6"><%:IPv6%></option>
+					</select>
+					<span class="form-btn form-btn-apply"><input type="button" value="<%:Traceroute%>" class="cbi-button" onclick="update_status(this.form.traceroute, this.form.traceroute_proto.selectedIndex)" /></span>
+					<% else %>
+					<span class="form-btn form-btn-apply"><input type="button" value="<%:Traceroute%>" class="cbi-button" onclick="update_status(this.form.traceroute)" /></span>
+					<% end %>
+				</div>
+			</fieldset>
+		</div>
+	</div>
+
+    <div class="widget col-xs-12 col-lg-12 mb-5" id="result_widget" style="display:none"> 
+        <div class="d-flex flex-wrap widget-body" >
+            <fieldset class="cbi-section">
+                <legend id="diag-rc-legend"><%:Diagnostic Result%></legend>
+                <span id="diag-rc-output"></span>
+            </fieldset>	
+        </div>
+		
+	</div>
+
+
+</form>
+
+<%+footer%>

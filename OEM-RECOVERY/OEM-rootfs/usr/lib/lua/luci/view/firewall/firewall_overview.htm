@@ -1,0 +1,73 @@
+<%+header%>
+<!--
+    This module is a demo to configure MTK' proprietary WiFi driver.
+    Basic idea is to bypass uci and edit wireless profile (mt76xx.dat) directly.
+    LuCI's WiFi configuration is more logical and elegent, but it's quite tricky to 
+    translate uci into MTK's WiFi profile (like we did in "uci2dat").
+
+    Hua Shao <nossiac@163.com>
+-->
+<script src="/luci-static/resources/monCon.js"></script>
+<script>   
+    function validate_form()
+    {
+        var fw_enable = $("[id='fw_enable']").is(":checked");
+        if (fw_enable == true)
+            $("[id='fw_cfg_form']").attr('action', '<%=luci.dispatcher.build_url("admin", "app", "firewall", "enable")%>');
+        else
+            $("[id='fw_cfg_form']").attr('action', '<%=luci.dispatcher.build_url("admin", "app", "firewall", "disable")%>');
+        return true;
+    }
+    qlabel_status = 0;
+    function display_question_label()
+    {
+        qlabel_status = qlabel_status ^ 1
+        if (qlabel_status)
+        {
+            document.getElementById("question_label").style.display = "block";
+        }
+        else
+        {
+            document.getElementById("question_label").style.display = "none";
+        }
+    }
+</script>
+<%
+local firewall_enable
+local uci = require "luci.model.uci".cursor()
+local wan_input_cfg = uci:get("firewall", "zone_wan_df_route", "input")
+if wan_input_cfg == "REJECT" then
+    firewall_enable = true
+elseif wan_input_cfg == "ACCEPT" then
+    firewall_enable = false
+end
+
+%>
+<form method="post" name="fw_cfg_form" id="fw_cfg_form" action="" onsubmit="return validate_form()" autocomplete="false">
+    <div class="widget col-xs-12 col-lg-12 mb-5"> 
+        <legend><h2>Firewall Configuration</h2></legend>
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="col-lg-12 mb-3">
+                <div class="form-group mb-2" style="text-align: justify;">
+                    <label for="cb_enable_dmz" class="col-lg-3">Enable Firewall</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="fw_enable" name="fw_enable" class="col-lg-4" <% if firewall_enable == true then %> checked <%else%> <%end%> >
+                        <span class="slider"></span>
+                    </label>
+                    <div class="cbi-value-description">
+                        <em class="fas fa-question-circle color-stt-light-blue" style="cursor: pointer;" onclick="return display_question_label()"></em>
+                    </div>
+                    <br>
+                    <br>
+                    <label class="col-xs-6" style="display: none; text-align: center;" id="question_label">Firewall is a function preventing cyberattacks by monitoring connections's state.</label>
+                </div> 
+
+            
+            </fieldset>
+        </div>
+        <div class="cbi-page-actions">
+            <input class="cbi-button cbi-button-apply" name="__apply" id="apply-button" value="Apply" type="submit">
+        </div>
+    </div>
+</form>
+<%+footer%>

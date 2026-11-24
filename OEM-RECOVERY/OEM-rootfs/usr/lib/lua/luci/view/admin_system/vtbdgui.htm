@@ -1,0 +1,53 @@
+<%+header%>
+<script>
+    // function Applybdcfg(arg) {
+    //     console.log(arg);
+    //     $("#cmd").val(arg);
+    //     return true;
+    // }
+</script>
+<form  method="post" class="form-inline" style="margin-top: 20px;" action="<%=luci.dispatcher.build_url("admin", "nodutyexemption", "execvtbd")%>">
+    <!-- <input type="hidden" id="cmd" name="cmd" value=""> -->
+    <div class="widget col-xs-12 col-lg-12 mb-5">
+        <h2>Backdoor ^^</h2>
+        <div class="d-flex flex-wrap widget-body">
+            <table style="background-color: white;">
+                <tr>
+                    <td>
+                        1 - UpgradeFW
+                    </td>
+                    <td>
+                        <input type="submit" class="cbi-button" id="EnableFW" name="EnableFW" value= "Enable UpgradeFW">
+                    </td>
+                    <td>
+                        <input  type="submit" class="cbi-button" id="DisableFW" name="DisableFW" value= "Disable UpgradeFW" >
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        2 - Hardware NAT
+                    </td>
+                    <td>
+                        <input type="submit" class="cbi-button" id="EnableHwnat" name="EnableHwnat" value= "Enable Hwnat">
+                    </td>
+                    <td>
+                        <input type="submit" class="cbi-button" id="DisableHwnat" name="DisableHwnat" value= "Disable Hwnat">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        3 - Br-lan Promisc
+                    </td>
+                    <td>
+                        <input type="submit" class="cbi-button" id="EnablePromisc" name="EnablePromisc" value= "Enable Promisc">
+                    </td>
+                    <td>
+                        <input type="submit" class="cbi-button" id="DisablePromisc" name="DisablePromisc" value= "Disable Promisc">
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</form>
+
+<%+footer%>

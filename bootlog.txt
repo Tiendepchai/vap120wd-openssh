@@ -1,0 +1,150 @@
+PLL4 FB_DL: 0x1d, 1/0 = 513/511 75000000
+do DDR setting..[00320381]
+Apply DDR2 Setting...(use customer AC)
+          0    8   16   24   32   40   48   56   64   72   80   88   96  104  112  120
+      --------------------------------------------------------------------------------
+0000:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0001:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0002:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0003:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0004:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0005:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0006:|    0    0    0    0    0    0    0    0    0    0    0    0    0    1    1    1
+0007:|    0    0    0    0    0    0    1    1    1    1    1    1    1    1    1    1
+0008:|    1    1    1    1    1    1    1    1    1    1    1    1    0    0    0    0
+0009:|    1    1    1    1    0    0    0    0    0    0    0    0    0    0    0    0
+000A:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+000B:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+000C:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+000D:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+000E:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+000F:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0010:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0011:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0012:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0013:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0014:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0015:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0016:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0017:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0018:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+0019:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+001A:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+001B:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+001C:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+001D:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+001E:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+001F:|    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+rank 0 coarse = 8
+rank 0 fine = 48
+B:|    0    0    0    0    0    0    0    1    1    1    0    0    0    0    0    0
+opt_dle value:8
+DRAMC_R0DELDLY[018]=00002728
+==================================================================
+                RX      DQS perbit delay software calibration
+==================================================================
+1.0-15 bit dq delay value
+==================================================================
+bit|     0  1  2  3  4  5  6  7  8  9
+--------------------------------------
+0 |    2 3 1 2 0 1 0 3 3 3
+10 |    3 3 5 5 1 5
+--------------------------------------
+
+==================================================================
+2.dqs window
+x=pass dqs delay value (min~max)center
+y=0-7bit DQ of every group
+input delay:DQS0 =40 DQS1 = 39
+==================================================================
+bit     DQS0     bit      DQS1
+0  (1~72)36  8  (1~78)39
+1  (1~76)38  9  (1~75)38
+2  (1~75)38  10  (1~76)38
+3  (1~73)37  11  (1~74)37
+4  (1~73)37  12  (1~78)39
+5  (1~77)39  13  (2~76)39
+6  (2~75)38  14  (1~76)38
+7  (1~80)40  15  (1~76)38
+==================================================================
+3.dq delay value last
+==================================================================
+bit|    0  1  2  3  4  5  6  7  8   9
+--------------------------------------
+0 |    6 5 3 5 3 2 2 3 3 4
+10 |    4 5 5 5 2 6
+==================================================================
+==================================================================
+     TX  perbyte calibration
+==================================================================
+DQS loop = 15, cmp_err_1 = ffff0000
+dqs_perbyte_dly.last_dqsdly_pass[0]=15,  finish count=1
+dqs_perbyte_dly.last_dqsdly_pass[1]=15,  finish count=2
+DQ loop=15, cmp_err_1 = ffff0040
+dqs_perbyte_dly.last_dqdly_pass[1]=15,  finish count=1
+DQ loop=14, cmp_err_1 = ffff0000
+dqs_perbyte_dly.last_dqdly_pass[0]=14,  finish count=2
+byte:0, (DQS,DQ)=(8,8)
+byte:1, (DQS,DQ)=(8,8)
+20,data:88
+[EMI] DRAMC calibration passed
+
+===================================================================
+                MT7621   stage1 code done
+                CPU=50000000 HZ BUS=16666666 HZ
+===================================================================
+
+
+U-Boot 1.1.3 (Oct 24 2023 - 03:50:48)
+
+Board: Ralink APSoC DRAM:  128 MB
+relocate_code Pointer at: 87f94000
+
+Config XHCI 40M PLL
+Allocate 16 byte aligned buffer: 87fc8d50
+Enable NFI Clock
+# MTK NAND # : Use HW ECC
+NAND ID [C8 D1 80 95 40]
+Device found in MTK table, ID: c8d1, EXT_ID: 809540
+Support this Device in MTK table! c8d1
+select_chip
+[NAND]select ecc bit:4, sparesize :64 spare_per_sector=16
+Signature matched and data read!
+load_fact_bbt success 1023
+load fact bbt success
+[mtk_nand] probe successfully!
+mtd->writesize=2048 mtd->oobsize=64,    mtd->erasesize=131072  devinfo.iowidth=8
+..============================================
+Ralink UBoot Version: 5.0.0.0
+--------------------------------------------
+ASIC MT7621A DualCore (MAC to MT7530 Mode)
+DRAM_CONF_FROM: Auto-Detection
+DRAM_TYPE: DDR2
+DRAM bus: 16 bit
+Xtal Mode=3 OCP Ratio=1/3
+Flash component: NAND Flash
+Date:Oct 24 2023  Time:03:50:48
+============================================
+icache: sets:256, ways:4, linesz:32 ,total:32768
+dcache: sets:256, ways:4, linesz:32 ,total:32768
+
+ ##### The CPU freq = 880 MHZ ####
+ estimate memory size =128 Mbytes
+#Reset_MT7530
+
+=================================================
+Check image validation:
+Image1 Header Magic Number --> OK
+Image2 Header Magic Number --> OK
+Image1 Header Checksum --> OK
+Image2 Header Checksum --> OK
+Image1 Data Checksum --> .................................................OK
+Image2 Data Checksum --> .................................................OK
+Image1 Stable Flag --> Not stable
+Image1 Try Counter --> 0
+
+Image1: OK Image2: OK
+
+=================================================
+#state value = 1
+

@@ -1,0 +1,105 @@
+<%+header%>
+<style>
+    .warn-text
+    {
+        padding-left: 15px;
+        color: red;
+    }
+    @media (min-width: 576px) 
+    {
+        .form-inline label
+        {
+            justify-content: left;
+        }
+    }
+
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+
+    h3, h4, h5, h6
+    {
+    font-weight: normal;
+    }
+</style>
+
+
+<form method="post" class="form-inline" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+    <legend><h2>Configuration</h2></legend>
+    <div class="widget col-xs-12 col-lg-12 mb-5">  
+        <label><h3>Backup Configuration</h3></label>
+        <div class="d-flex flex-wrap widget-body">
+                <legend><h5>Click "Generate Backup" to download a tar archive of the current configuration files.</h5></legend>
+        </div>
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" type="submit"  name="backup" style="width:140px;" value="Generate Backup">
+       </div>
+
+       <% if reset_avail then %>
+       <label><h3>Reset to default</h3></label>
+       <div class="d-flex flex-wrap widget-body">
+                <legend><h5>To reset the firmware to its initial state, click "Reset Factory" (only possible with squashfs images).</h5></legend>
+        </div>
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" type="submit"  name="reset" style="width:140px;" onclick="return confirm('<%:Really reset all changes?%>')" value="Reset Factory">
+        </div>
+        <%end%>
+
+        <label><h3>Restore configuration</h3></label>
+        <div class="d-flex flex-wrap widget-body">
+                <legend><h5>To restore configuration files, you can upload a previously generated backup archive here.</h5></legend>
+                <div class="custom-file col-sm-8 ml-3" style="margin-left: -1%;">
+                    <input type="file" class="custom-file-input" name="archive" id="archive" aria-describedby="archive">
+                    <label class="custom-file-label" for="archive">Choose a file...</label>
+                </div>
+        </div>
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" type="submit"  name="restore" style="width:140px;" value="Upload Restore">
+       </div>
+
+       <% if is_valid_file == "0" then %>
+       <script>
+           alert("Invalid File")
+       </script>
+       <% end %>
+
+       <!-- <label><h3>OS Switching</h3></label>
+       <div class="d-flex flex-wrap widget-body">
+               <% if boot_flag == "1" then %>
+			   <legend><h5>Click "Switch OS" to <b>switch to OS2</b></h5></legend>
+               <legend><h5><b>Current OS1: <%=firmversion%></b></h5></legend>
+               <% else %>
+			   <legend><h5>Click "Switch OS" to <b>switch to OS1</b></h5></legend>
+               <legend><h5><b>Current OS2: <%=firmversion%></b></h5></legend>
+               <%end%>
+       </div>
+       <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+           <input class="quick-setup-apply" type="submit"  style="width:140px;" name="boot_os" value="Switch OS">
+      </div> -->
+
+    </div>
+
+</form>
+
+<script>
+	document.querySelector('.custom-file-input').addEventListener('change', function (e) {
+	  var name = document.getElementById("archive").files[0].name;
+	  var nextSibling = e.target.nextElementSibling
+	  nextSibling.innerText = name
+	})
+</script>
+<%+footer%>

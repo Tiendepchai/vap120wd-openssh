@@ -1,0 +1,10 @@
+Package: libllcfg
+Version: 1.0-1
+Depends: libc
+Source: package/viettel/libllcfg
+License: LGPL-2.1
+Section: Viettel Properties
+Maintainer: Ho Hung Duy <duyhh2@viettel.com.vn>
+Architecture: ramips_24kec
+Installed-Size: 2160
+Description:  libllcfg is a library to store config data into data structure (linked list)

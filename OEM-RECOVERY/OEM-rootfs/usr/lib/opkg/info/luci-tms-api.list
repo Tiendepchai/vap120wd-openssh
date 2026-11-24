@@ -1,0 +1,11 @@
+/usr/lib/lua/luci/controller/api/host.lua
+/usr/lib/lua/luci/controller/api/updatefirmware.lua
+/usr/lib/lua/luci/controller/api/wifi_ap_ssid.lua
+/usr/lib/lua/luci/controller/api/deviceinfo.lua
+/usr/lib/lua/luci/controller/api/ethernet.lua
+/usr/lib/lua/luci/controller/api/wifiradio.lua
+/usr/lib/lua/luci/controller/api/wifiscanneighbors.lua
+/usr/lib/lua/luci/controller/api/bootup_params.lua
+/usr/lib/lua/luci/controller/api/vendorlogfile.lua
+/usr/lib/lua/luci/controller/api/faultmgmt.lua
+/usr/lib/lua/luci/controller/api/multiap.lua

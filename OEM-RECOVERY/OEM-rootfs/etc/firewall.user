@@ -1,0 +1,22 @@
+# This file is interpreted as shell script.
+# Put your custom iptables rules here, they will
+# be executed with each firewall (re-)start.
+
+# Internal uci firewall chains are flushed and recreated on reload, so
+# put custom rules into the root chains e.g. INPUT or FORWARD or into the
+# special user chains, e.g. input_wan_rule or postrouting_lan_rule.
+
+# add rule for lock/unlock
+/usr/bin/lock/lock_action.sh start_lock_firewall
+
+# AP-775: add rule for smart alert
+sh /usr/sbin/smartalert_action start_smartalert_firewall 
+
+# AP-712: add rule drop arp with dst_ip 192.168.2.254
+sh /usr/etc/vt_drop_arp.sh
+
+#AP-202: Initial chain for parental control feature
+iptables -N parental_control
+iptables -I forwarding_rule -j parental_control
+ip6tables -N parental_control
+ip6tables -I forwarding_rule -j parental_control

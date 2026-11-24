@@ -1,0 +1,103 @@
+<%+header%>
+
+<%
+local fileversion = io.open("/usr/etc/version","r")
+fileversion:read("*line")
+fileversion:read("*line")
+fileversion:read("*line")
+local firmversion = fileversion:read("*line")
+  %>
+<style>
+
+    .warn-text
+    {
+        padding-left: 15px;
+        color: red;
+    }
+    @media (min-width: 576px) 
+    {
+        .form-inline label
+        {
+            justify-content: left;
+        }
+    }
+
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+
+    h3, h4, h5, h6
+    {
+    font-weight: normal;
+    }
+
+</style>
+
+<script src="/luci-static/resources/monCon.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+
+<form method="post" id="upgrade_firmware" class="form-inline" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+    <div class="widget col-xs-12 col-lg-12 mb-5"> 
+        <legend><h2>Upgrade Firmware</h2></legend>
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="col-lg-12 mb-3">
+                <div class="form-group mb-2">
+                    <label class="col-sm-4"><h5>Current Firmware Version</h5></label>
+                    <label class="status-value col-sm-7" style="font-weight:bold" ><h5><b><%=firmversion%></b></h5></label>
+                </div>
+
+                <div class="form-group mb-2">
+                    <label class="text-justify mb-2 col-sm-12" style="margin-top: 1%;"><h5>Choose a firmware image then click Upgrade to begin.</h5></label>
+                    <div class="custom-file col-sm-6 ml-3">
+                        <input type="file" class="custom-file-input" name="image" id="image" aria-describedby="image">
+                        <label class="custom-file-label" for="image">Choose an image...</label>
+                    </div>
+                </div>
+
+                <!-- <div class="form-group mb-2">
+                    <label for="cb_overwrite_cfg" class="col-lg-4"><h5>Keep configuration</h5></label>
+                    <input type="checkbox"  checked="checked" name="keep" id="cb_overwrite_cfg" onchange="">
+                </div>  -->
+                <input type="hidden" name="keep" value="on">
+                <div>
+                    <% if image_invalid then %>
+					<div class="cbi-section-error"><%:The uploaded image file does not contain a supported format. Make sure that you choose the generic image format for your platform. %></div>
+                    <%elseif version_unsatisfied then %>
+                    <div class="cbi-section-error"><%:The uploaded image file has unvalid version number. Please using the lastest image. %></div>
+                    <%elseif signature_unsatisfied then %>
+                    <div class="cbi-section-error"><%:The uploaded image file has unvalid signature. %></div>
+                    <% end %>
+                </div>
+            </fieldset>
+        </div>
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" id="appply_btn" type="submit" value="Upgrade">
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('.custom-file-input').addEventListener('change', function (e) {
+            console.log("asasda");
+          var name = document.getElementById("image").files[0].name;
+          var nextSibling = e.target.nextElementSibling
+          nextSibling.innerText = name
+        })
+    </script>
+
+</form>
+
+<%+footer%>

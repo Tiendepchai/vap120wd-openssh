@@ -1,0 +1,80 @@
+<%#
+ Copyright 2008 Steven Barth <steven@midlink.org>
+ Copyright 2008 Jo-Philipp Wich <jow@openwrt.org>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%+header%>
+<script src="/luci-static/resources/monCon.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+<style>
+    .warn-text
+    {
+        padding-left: 15px;
+        color: red;
+    }
+    @media (min-width: 576px) 
+    {
+        .form-inline label
+        {
+            justify-content: left;
+        }
+    }
+
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+
+    h3, h4, h5, h6
+    {
+    font-weight: normal;
+    }
+</style>
+
+<form method="post" class="form-inline" action="<%=luci.dispatcher.build_url("admin", "system", "backupfiles")%>" enctype="multipart/form-data">
+    <div class="widget col-xs-12 col-lg-12 mb-5"> 
+        <h2><a id="content" name="content"><%:Reboot%></a></h2>
+        <div class="d-flex flex-wrap widget-body">
+            <%if not reboot then %>
+            <legend><h5>Click Reboot button to reboot the operating system of your device.</h5></legend>
+            <%else%>
+            <legend><h5>Please wait, device rebooting....</h5></legend>
+            <%end%>
+
+            <%-
+            local c = require("luci.model.uci").cursor():changes()
+            if c and next(c) then
+            -%>
+                <legend><h5><b>Warning:</b> There are unsaved changes that will be lost while rebooting!</h5></legend>
+            <%-
+            end
+            %>
+        </div>
+        <%
+        if not reboot then 
+        -%>
+        <!-- <p><a href="<%=controller%>/admin/system/reboot?reboot=1"><%:Perform reboot%></a></p> -->
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" type="submit"  name="reboot" value="Reboot">
+        </div>
+        <%- else -%>
+        <script>type="text/javascript">setTimeout("location='<%=controller%>/admin'", 100000);</script>
+        <%- end -%>
+
+    </div>
+</form>
+<%+footer%>

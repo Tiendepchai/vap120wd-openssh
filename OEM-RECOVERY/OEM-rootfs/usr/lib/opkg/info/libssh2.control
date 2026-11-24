@@ -1,0 +1,11 @@
+Package: libssh2
+Version: 1.10.0-1
+Depends: libc, libopenssl, zlib
+Source: package/network/utils/libssh2
+License: BSD-3-Clause
+LicenseFiles: COPYING
+Section: libs
+Maintainer: Jiri Slachta <jiri@slachta.eu>
+Architecture: ramips_24kec
+Installed-Size: 85233
+Description:  libssh2 is a client-side C library implementing the SSH2 protocol.

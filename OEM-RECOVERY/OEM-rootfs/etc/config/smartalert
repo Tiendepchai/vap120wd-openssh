@@ -1,0 +1,4 @@
+config main 'main'
+    option enable '0'
+    option redirect_addr '192.168.4.1'
+	option redirect_port '8083'

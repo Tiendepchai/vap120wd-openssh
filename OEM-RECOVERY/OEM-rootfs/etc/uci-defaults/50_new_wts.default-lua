@@ -1,0 +1,3 @@
+#!/usr/bin/lua
+local mtkwifi = require("mtkwifi")
+mtkwifi.save_easymesh_bss_cfgs(mtkwifi.get_bss_cfgs_from_dat())

@@ -1,0 +1,8 @@
+Package: setSSIDWLan
+Version: 1
+Depends: libc
+Source: package/viettel/setSSIDWLan
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 2410
+Description:  set ssid wifi

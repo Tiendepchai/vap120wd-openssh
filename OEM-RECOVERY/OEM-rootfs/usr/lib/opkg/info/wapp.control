@@ -1,0 +1,8 @@
+Package: wapp
+Version: 1
+Depends: libc, libpthread, librt, libllcfg, 1905daemon
+Source: package/mtk/applications/wappd
+Section: MTK Properties
+Architecture: ramips_24kec
+Installed-Size: 401503
+Description:  wifi app daemon

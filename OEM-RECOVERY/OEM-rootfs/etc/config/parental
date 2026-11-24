@@ -1,0 +1,13 @@
+config global 'global'
+	option enabled '0'
+	option rule_idx_max '0'
+
+config template 'template1'
+	option weekdays 'Sun,Mon,Tue,Wed,Thu,Fri,Sat'
+	option name 'Template1'
+	option stop_time '23:59'
+	option start_time '00:00'
+	option index '1'
+	option FilterType 'Internet'
+	option FilterMode 'Black'
+

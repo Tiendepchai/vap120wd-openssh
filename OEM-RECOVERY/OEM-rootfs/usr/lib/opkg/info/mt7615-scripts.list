@@ -1,0 +1,8 @@
+/lib/wifi/mt7615.lua
+/etc/wireless/mt7615/mt7615.1.2G.dat
+/etc/wireless/mt7615/mt7615.eeprom.bin
+/etc/wireless/mt7615/mt7615-sku-bf.dat
+/lib/upgrade/keep.d/mt7615-scripts
+/etc/wireless/mt7615/mt7615.1.5G.dat
+/etc/wireless/mt7615/version
+/etc/wireless/mt7615/mt7615-sku.dat

@@ -1,0 +1,169 @@
+#!/bin/sh
+
+SSH_KEY_DIR="/tmp/dropbear-key"
+PRIVATE_KEY="id_dropbear"
+SSH_OPTIONS="-f -N -y -i $SSH_KEY_DIR/$PRIVATE_KEY"
+SSH_CLIENT="dbclient"
+XXD="xxd"
+
+# Show help
+show_tunnel_options()
+{
+   echo
+   echo "SSH tunnel client"
+   echo
+   echo "Tunnel options:"
+   echo "   -L     Server URL/IP."
+   echo "   -u     Username."
+   echo "   -rp    Specify remote port used in server."
+   echo "   -lp    Specify local port used in AP."
+   echo "   -p     Specify server SSH port in server."
+   echo
+}
+
+show_usage()
+{
+    echo
+    echo -n "Usage: "
+    echo "$(basename $0) [options]"
+    echo
+    echo "Example: "
+    echo "  tunnel [-r path_to_hex_private_key] ==> Revert private key"
+    echo "  tunnel -s [-L URL/IP] [-u username] [-rp remote_port] [-lp local_port] [-p ssh_port] ==> Start SSH tunnel"
+    echo "  tunnel -k ==> Close SSH tunnel"
+    echo
+    exit
+}
+
+get_opts()
+{
+    while [ $# -gt 0 ]
+    do
+        key=$1
+        case $key in
+            -L)
+                shift
+                url=$1
+                shift
+                ;;
+            -u)
+                shift
+                username=$1
+                shift
+                ;;
+            -rp)
+                shift
+                remote_port=$1
+                shift
+                ;;
+            -lp)
+                shift
+                local_port=$1
+                shift
+                ;;
+            -p)
+                shift
+                ssh_port=$1
+                shift
+                ;;
+            ?) show_help; exit;;
+        esac
+    done
+}
+
+######################################################
+## Delete key
+######################################################
+free_resources()
+{
+    rm -rf $SSH_KEY_DIR
+}
+
+######################################################
+## Convert private key in hex format from input string
+######################################################
+ssh_revert_key()
+{
+    free_resources
+    local hex_key_file=$1
+    if [ -z $hex_key_file ]; then
+        echo "Need path to private key file in hex format"
+        exit
+    fi
+    if [ -f $hex_key_file ]; then
+        if [ -s $hex_key_file ]; then
+            mkdir -p $SSH_KEY_DIR
+            $XXD -p -r $hex_key_file $SSH_KEY_DIR/$PRIVATE_KEY
+            if [ -f $SSH_KEY_DIR/$PRIVATE_KEY ]; then
+                echo "Private key is created successfully"
+            else
+                echo "Fail to create private key"
+            fi
+        else
+            echo "File $hex_key_file is empty."
+        fi
+    else
+        echo "File $hex_key_file does not exist."
+    fi  
+}
+######################################################
+## Start tunnel
+######################################################
+ssh_start_tunnel()
+{
+    if [ $# -ne 10 ]; then
+        echo "Please apply enough options."
+        show_usage
+        exit
+    fi
+    get_opts $*
+    echo "URL       : $url"
+    echo "username  : $username"
+    echo "rp        : $remote_port"
+    echo "lp        : $local_port"
+    echo "p         : $ssh_port"
+    if [ ! -f $SSH_KEY_DIR/$PRIVATE_KEY ]; then
+        echo "Private key not found."
+        exit
+    fi
+    $SSH_CLIENT $SSH_OPTIONS -R $remote_port:localhost:$local_port $username@$url -p $ssh_port
+    if [ $? -eq 0 ]; then
+        local pid=`pidof dbclient`
+        echo "Start tunnel successfully with $pid"
+    else
+        echo "Fail to start SSH tunnel."
+    fi
+}
+
+######################################################
+## Close tunnel
+######################################################
+ssh_close_tunnel()
+{
+    free_resources
+    local pid=`pidof $SSH_CLIENT`
+    if [ -z $pid ]; then
+        echo "No SSH tunnel is running"
+        exit
+    fi
+    kill -9 $pid
+}
+########################################################
+## Main program
+########################################################
+
+if [ $# -lt 1 ] || [ $# -gt 12 ]; then
+    show_usage
+    exit
+fi
+
+while getopts rskh opts
+do
+    case ${opts} in
+        r) shift; ssh_revert_key $*; exit;;
+        s) shift; ssh_start_tunnel $*; exit;;
+        k) ssh_close_tunnel; exit;;
+        h) show_tunnel_options; exit;;
+        *) echo "Invalid option ${opts}"; show_usage;;
+    esac
+done

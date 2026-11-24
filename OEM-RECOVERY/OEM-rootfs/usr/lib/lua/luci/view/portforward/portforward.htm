@@ -1,0 +1,555 @@
+<%+header%>
+
+<%
+local util = require("luci.util")
+local uci =  require("luci.model.uci").cursor()
+local firewall_tbl = uci:get_all("firewall")
+
+local lan_ip = uci:get("network", "lan", "ipaddr")
+local http_port = uci:get("lighttpd", "main", "listen_http")
+local https_port = uci:get("lighttpd", "main", "listen_https")
+local uhttpd_port = uci:get("uhttpd", "main", "listen_http")
+uhttpd_port =  string.match(uhttpd_port, "127.0.0.1:(%d+)")
+
+local portforward_tbl = {}
+local num_portforward_entry = 0
+local cmd
+for k, v in pairs(firewall_tbl) do
+    if v[".type"] == "redirect" and v["target"] == "DNAT" and v[".name"] ~= "dmz" then
+		cmd = "uci show firewall | grep -w name=\\\'"..v["name"].."\\\'" 
+		local output = util.exec(cmd)
+		v["index"] = string.match(output, "[(%d+)]") or "-1"
+		table.insert(portforward_tbl, v)
+        num_portforward_entry = num_portforward_entry + 1
+    end
+end
+table.sort(portforward_tbl, function(k1, k2) return k1.index < k2.index end)
+%>
+
+<style>
+
+    .warn-text
+    {
+        padding-left: 15px;
+        color: red;
+    }
+    @media (min-width: 576px) 
+    {
+        .form-inline label
+        {
+            justify-content: left;
+        }
+    }
+
+    input:disabled
+    {
+        background-color: darkgrey;
+    }
+    .input-group>.input-password
+    {
+        width: 1%;
+        flex: 1 1 auto;
+    }
+    .input-password
+    {
+        border-right: solid 0px !important;
+        border-radius: 3px 0 0 3px;
+        padding: .375rem .75rem;
+    }
+
+    .show-password-btn 
+    {
+        border: #adb5bd solid 1px !important;
+        border-left: solid 0px !important;
+        border-radius: 0 3px 3px 0;
+        background-color: #fff;
+        width: 30px;
+        padding-top: 7px;
+        padding-left: 7px;
+    }
+    
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+
+    .quick-setup-cancel
+    {
+        color: black;
+        padding: 5px 14px 6px;
+        background-color: #e6e6e6;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+
+    h3, h4, h5, h6
+    {
+    font-weight: normal;
+    }
+
+    input[type=text]:enabled {
+    background: #ffffff;
+    }
+
+    input[type=text]:disabled {
+    background: #feffff;
+    }
+
+
+</style>
+
+<script src="/luci-static/resources/monCon.js"></script>
+<script src="/luci-static/resources/util.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+
+<script type="text/javascript">
+    var tmp_name, tmp_proto, tmp_src_dport, tmp_desp_ip, tmp_dest_port, tmp_enable;
+
+    function is_valid_int_port(value){
+        if(value < 0  || value > 65535)
+            return false;
+    }
+
+    function is_valid_ext_port(value)
+    {
+
+        var httpsPort;
+        var httpPort;
+        var uhttpdPort;
+        if(value < 0  || value > 65535)
+            return false;
+        httpsPort = "<%=tostring(https_port)%>";
+        httpPort = "<%=tostring(http_port)%>";
+        uhttpdPort = "<%=tostring(uhttpd_port)%>";
+        if((value == httpPort) || (value == httpsPort) || (value == uhttpdPort))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    function validate_portmapping(i){
+        //name
+        if ( i == -1){
+            $("#name_add").val($("#name_add").val().trim());
+            $("#src_dport_add").val($("#src_dport_add").val().trim());
+            $("#dest_ip_add").val($("#dest_ip_add").val().trim());
+            $("#dest_port_add").val($("#dest_port_add").val().trim());
+
+            var name = $("#name_add").val();
+            var ext_port = $("#src_dport_add").val();
+            var int_ip = $("#dest_ip_add").val();
+            var int_port = $("#dest_port_add").val();
+        }
+        else{
+            $("#name_"+i).val($("#name_"+i).val().trim());
+            $("#src_dport_"+i).val($("#src_dport_"+i).val().trim());
+            $("#dest_ip_"+i).val($("#dest_ip_"+i).val().trim());
+            $("#dest_port_"+i).val($("#dest_port_"+i).val().trim());
+            var name = $("#name_"+i).val();
+            var ext_port = $("#src_dport_"+i).val();
+            var int_ip = $("#dest_ip_"+i).val();
+            var int_port = $("#dest_port_"+i).val();
+        }
+
+        if (isValidName(name) == false){
+            alert("Invalid name!");
+            if (i == -1)
+                $("#name_add").focus();
+            else
+                $("#name_"+i).focus();
+            return false;
+        }
+
+        for(var id = 0; id < <%=num_portforward_entry%>; id++){
+
+            if (id == i)
+                continue;
+            if(name == $("#name_"+id).val()){
+                alert('Name has been already used for other rules!');
+                if (i == -1)
+                    $("#name_add").focus();
+                else
+                    $("#name_"+i).focus();
+				return false;
+            }
+        }
+
+        //external port
+        if(is_valid_ext_port(ext_port) == false){
+            alert('Invalid External port number!');
+            if (i == -1)
+                $("#src_dport_add").focus();
+            else
+                $("#src_dport_"+i).focus();
+            return false;
+        }
+
+        for(var id = 0; id < <%=num_portforward_entry%>; id++){
+            if (id == i)
+                continue;
+            if(ext_port == $("#src_dport_"+id).val()){
+                alert('External port has been already used for other rules!');
+                if (i == -1)
+                    $("#src_dport_add").focus();
+                else
+                    $("#src_dport_"+i).focus();
+				return false;
+            }
+        }
+
+        //internal ip
+        if (isValidIpAddress(int_ip) == false)
+        {
+            alert('Internal IP address format incorrect!');
+            if (i == -1)
+                $("#dest_ip_add").focus();
+            else
+                $("#dest_ip_"+i).focus();
+            return false;
+        }
+
+        if(int_ip == "<%=lan_ip%>" ){
+            alert("IP address is not allowed to be the same as AP's!");
+            if (i == -1)
+                $("#dest_ip_add").focus();
+            else
+                $("#dest_ip_"+i).focus();
+            return false;  
+        }
+
+        //internal port
+        if(is_valid_int_port(int_port) == false){
+            alert('Invalid Internal port number!');
+            if (i == -1)
+                $("#dest_port_add").focus();
+            else
+                $("#dest_port_"+i).focus();
+            return false;
+        }
+
+        for(var id = 0; id < <%=num_portforward_entry%>; id++){
+            console.log(int_ip + "/" +$("#dest_ip_"+id).val().trim() + ":" + int_port + "/" + $("#dest_port_"+id).val().trim());
+            if (id == i)
+                continue;
+            if(int_ip == $("#dest_ip_"+id).val().trim() ){
+                if(int_port == $("#dest_port_"+id).val().trim()){
+                    alert('Internal port and IP have been already used for other rules!');
+                    if (i == -1)
+                        $("#dest_port_add").focus();
+                    else
+                        $("#dest_port_"+i).focus();
+                    return false;
+                }
+            }
+        }
+       
+    }
+
+    function is_any_editting(i){
+	    for(id =0; id < <%=num_portforward_entry%>; id++){
+            if(id == i)
+                continue;
+            if(document.getElementById("name_" + id).disabled == false){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function do_edit(i){
+
+        if(is_any_editting(i) == true){
+            alert("Only one Mapping entry can be edited at a time");
+                return false;
+        }
+        tmp_name = $("#name_" + i).val();
+        tmp_proto = $("#slt_proto_" + i + " option:selected").val();
+        tmp_src_dport = $("#src_dport_" + i).val();
+        tmp_desp_ip = $("#dest_ip_" + i).val();
+        tmp_dest_port = $("#dest_port_" + i).val();
+        tmp_enable = document.getElementById("enable_" + i).checked;
+
+        document.getElementById("index_" + i).disabled = false;
+        document.getElementById("name_" + i).disabled = false;
+        document.getElementById("slt_proto_" + i).disabled = false;
+        document.getElementById("src_dport_" + i).disabled = false;
+        document.getElementById("dest_ip_" + i).disabled = false;
+        document.getElementById("dest_port_" + i).disabled = false;
+        document.getElementById("enable_" + i).disabled = false;
+
+        $("#btn_edit_" + i).hide();
+        $("#btn_apply_" + i).show();
+        $("#btn_cancel_" + i).show();
+        $("#row_edit_" + i).show();  
+
+        document.getElementById("choose_all").checked = false;
+        document.getElementById("choose_all").disabled = true;
+        for(var j = 0; j < <%=num_portforward_entry%>; j++){
+            document.getElementById("choose_" + j).checked = false;
+            document.getElementById("choose_" + j).disabled = true;
+        }
+
+    }
+
+    function do_apply(i, operation){
+        if(validate_portmapping(i) == false)
+            return false;
+        $("#operation").val(operation);
+        $('form#fwd_form').submit();
+    }
+
+    function do_cancel(i){
+        
+        $("#name_" + i).val(tmp_name);
+        $("#slt_proto_" + i).val(tmp_proto);
+        $("#src_dport_" + i).val(tmp_src_dport);
+        $("#dest_ip_" + i).val(tmp_desp_ip);
+        $("#dest_port_" + i).val(tmp_dest_port);
+        document.getElementById("enable_" + i).checked = tmp_enable;
+
+        document.getElementById("index_" + i).disabled = true;
+        document.getElementById("name_" + i).disabled = true;
+        document.getElementById("slt_proto_" + i).disabled = true;
+        document.getElementById("src_dport_" + i).disabled = true;
+        document.getElementById("dest_ip_" + i).disabled = true;
+        document.getElementById("dest_port_" + i).disabled = true;
+        document.getElementById("enable_" + i).disabled = true;
+        $("#btn_edit_" + i).show();
+        $("#btn_apply_" + i).hide();
+        $("#btn_cancel_" + i).hide();
+        $("#row_edit_" + i).hide(); 
+
+        document.getElementById("choose_all").disabled = false;
+        for(var j = 0; j < <%=num_portforward_entry%>; j++){
+            document.getElementById("choose_" + j).disabled = false;
+        }
+    }
+
+    function toggle_checkbox(source) {
+        for(var i = 0; i < <%=num_portforward_entry%> ; i++) {
+            document.getElementById("choose_" + i).checked = source.checked;
+        }
+    }
+
+    function do_add(){
+
+        if(is_any_editting(-1) == true){
+            alert("Please apply your changes first!");
+            return false;
+        }
+
+        document.getElementById("index_add").disabled = false;
+        document.getElementById("name_add").disabled = false;
+        document.getElementById("slt_proto_add").disabled = false;
+        document.getElementById("src_dport_add").disabled = false;
+        document.getElementById("dest_ip_add").disabled = false;
+        document.getElementById("dest_port_add").disabled = false;
+        document.getElementById("enable_add").disabled = false;
+
+        $("#row_add").show();
+        $("#row_edit_add").show();
+
+        document.getElementById("choose_all").checked = false;
+        document.getElementById("choose_all").disabled = true;
+        for(var j = 0; j < <%=num_portforward_entry%>; j++){
+            document.getElementById("choose_" + j).checked = false;
+            document.getElementById("choose_" + j).disabled = true;
+        }
+        
+    }
+
+    function do_cancel_add(){
+        $("#row_add").hide();
+        $("#row_edit_add").hide();
+
+        $("#name_add").val("");
+        document.getElementById("slt_proto_add").value= "tcp udp";
+        $("#src_dport_add").val("");
+        $("#dest_ip_add").val("");
+        $("#dest_port_add").val("");
+        document.getElementById("enable_add").checked = true; 
+
+        document.getElementById("index_add").disabled = true;
+        document.getElementById("name_add").disabled = true;
+        document.getElementById("slt_proto_add").disabled = true;
+        document.getElementById("src_dport_add").disabled = true;
+        document.getElementById("dest_ip_add").disabled = true;
+        document.getElementById("dest_port_add").disabled = true;
+        document.getElementById("enable_add").disabled = true;
+
+        document.getElementById("choose_all").disabled = false;
+        for(var j = 0; j < <%=num_portforward_entry%>; j++){
+            document.getElementById("choose_" + j).disabled = false;
+        }
+    }
+    // function sync_proto(i){
+    //     var proto = $("#slt_proto_" + i + " option:selected").val();
+    //     $("#proto_" + i).val(proto);
+    //     var tmp =  $("#proto_" + i).val();
+    //     console.log(tmp);
+    // }
+
+    function is_any_checked(){
+        
+        for(var i = 0; i < <%=num_portforward_entry%> ; i++){
+            if(document.getElementById("choose_" + i).checked == true)
+                return true;
+        }
+        return false;
+    }
+
+    function do_delete(){
+
+        if(is_any_editting() == true){
+            alert("Please apply your changes first!");
+            return false;
+        }
+
+        if(is_any_checked() == false){
+            alert("Please select at least one mapping to delete!");
+            return false;
+        }
+        $("#operation").val("del");
+        $('form#fwd_form').submit();
+    }
+</script>
+
+<form method="post" id="fwd_form" class="form-inline" action="<%=luci.dispatcher.build_url("admin", "app", "portforward", "apply")%>" onsubmit="" autocomplete="off">
+    <div class="widget col-xs-12 col-lg-12 mb-3"> 
+        <legend><h2>Port Forwarding</h2></legend>  
+        <div class="d-flex flex-wrap widget-body">
+            <div class="table-responsive col-xs-12" style="float: none; margin: 0 auto; text-align: center; padding-bottom: 30px;">
+                <input type="hidden" name="operation" id="operation">
+                <table id="rule_list" name="rule_list" cellpadding="0" cellspacing="0" class="table table-bordered" style="border:1px solid black; width:100%">
+                    <thead>
+                        <tr class="thead-light" style="text-align: center;">
+                            <th><input type="checkbox" id="choose_all" onclick="toggle_checkbox(this)" ></th>
+                            <th style="text-align: center; vertical-align: middle; font-weight: bold;">Name</th>
+                            <th style="text-align: center; vertical-align: middle; font-weight: bold;">Protocol</th>
+                            <th style="text-align: center; vertical-align: middle; font-weight: bold;">External Port</th>
+                            <th style="text-align: center; vertical-align: middle; font-weight: bold;">Internal IP</th>
+                            <th style="text-align: center; vertical-align: middle; font-weight: bold;">Internal Port</th>
+                            <th style="text-align: center; vertical-align: middle; font-weight: bold;" >Enabled</th>
+                            <th style="text-align: center; vertical-align: middle; font-weight: bold;" >Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <%
+                        local i = -1
+                        for k, v in pairs(portforward_tbl) do
+                            i = i + 1%>
+                        <tr align="middle">
+                            <td style="text-align: center; vertical-align: middle;"><input type="hidden" name="index" id="index_<%=i%>" value="<%=v["index"]%>" disabled><input type="checkbox" name="del_<%=i%>" id="choose_<%=i%>" ></td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="text" maxlength="15" style="width: 120px;" name="name" id="name_<%=i%>" value="<%=v["name"]%>" disabled></td>
+                            <td style="text-align: center; vertical-align: middle;">
+                                <select id="slt_proto_<%=i%>" name="proto" style="max-width: 100px" onchange="sync_proto(<%=i%>)" disabled>
+                                    <option value="tcp">TCP</option>         
+                                    <option value="udp">UDP</option>   
+                                    <option value="tcp udp">TCP/UDP</option>   
+                                </select>
+
+                                <!-- <input type="text" style="display:  none;" name="proto" id="proto_<%=i%>" value="<%=v["proto"]%>"> -->
+                                <script>document.getElementById("slt_proto_<%=i%>").value= "<%=v["proto"]%>";</script>
+                            </td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="text" style="width: 70px;" name="src_dport" id="src_dport_<%=i%>" value="<%=v["src_dport"]%>" disabled></td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="text" style="width: 120px;" name="dest_ip" id="dest_ip_<%=i%>"  value="<%=v["dest_ip"]%>" disabled></td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="text" style="width: 70px;" name="dest_port" id="dest_port_<%=i%>"  value="<%=v["dest_port"]%>" disabled></td>
+                            <td style="text-align: center; vertical-align: middle;">
+                                <label class="toggle-switch" style="margin: auto;">
+                                    <input type="checkbox" name="enable" id="enable_<%=i%>"  disabled>
+                                    <span class="slider"></span>
+                                </label>
+                            </td>
+                            <%if v["enabled"] == "0" then %>
+                            <script>document.getElementById("enable_<%=i%>").checked = false;</script>
+                            <%else%>
+                            <script>document.getElementById("enable_<%=i%>").checked = true;</script>
+                            <%end%>
+                            <script>document.getElementById("enable_<%=i%>").disabled = true;</script>
+                            <td style="text-align: center; vertical-align: middle;">
+                            <em data-toggle='tooltip' data-placement='top' id="btn_edit_<%=i%>" title='Edit' class='fa fa-pencil-alt icon-btn icon-btn-edit' style="cursor: pointer;" onclick='do_edit(<%=i%>)'></em>
+                            <!-- <em data-toggle='tooltip' data-placement='top' id="btn_apply_<%=i%>" style="display: none; color:green;" title='Apply' class="fa fa-check" onmouseover='this.style.cursor="hand"' onclick='do_apply(<%=i%>)'></em>
+                            <em data-toggle='tooltip' data-placement='top' id="btn_cancel_<%=i%>" style="display: none;" title='Cancel' class="fa fa-minus" onmouseover='this.style.cursor="hand"' onclick='do_cancel(<%=i%>)'></em> -->
+                            </td>
+                        </tr>
+                        <tr id="row_edit_<%=i%>" style="display: none;">
+                            <td colspan="8" style="text-align: center; vertical-align: middle;">
+                                <button class="quick-setup-apply" type="button" style="width:80px; margin-right: 20px; margin-bottom: 30px;" onclick="do_apply(<%=i%>, 'edit')">Apply</button>   
+                                <button class="quick-setup-cancel" type="button" style="width:80px; margin-right: 20px;  margin-bottom: 30px;" onclick="do_cancel(<%=i%>)">Cancel</button>   
+                            </td>
+                        </tr>
+                        <%end%>
+                        <!-- <tr id="row_edit_<%=i%>" style="text-align: center; vertical-align: middle;">
+                            <td colspan="8" style="text-align: center; vertical-align: middle;">
+                                <button class="quick-setup-apply" type="button" name="" onclick="">Add</button>    
+                            </td>
+                        </tr> -->
+                        <tr align="middle" id="row_add" style="display: none;">
+                            <td style="text-align: center; vertical-align: middle;"><input type="hidden" name="index" id="index_add" value="<%=num_portforward_entry%>" disabled></td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="text" maxlength="15" style="width: 120px;" name="name" id="name_add" disabled></td>
+                            <td style="text-align: center; vertical-align: middle;">
+                                <select id="slt_proto_add" name="proto" style="max-width: 100px" disabled>
+                                    <option value="tcp">TCP</option>         
+                                    <option value="udp">UDP</option>   
+                                    <option value="tcp udp">TCP/UDP</option>   
+                                </select>
+                                <script>document.getElementById("slt_proto_add").value= "tcp udp";</script>
+                            </td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="text" style="width: 70px;" name="src_dport" id="src_dport_add" disabled></td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="text" style="width: 120px;" name="dest_ip" id="dest_ip_add" disabled></td>
+                            <td style="text-align: center; vertical-align: middle;"><input type="text" style="width: 70px;" name="dest_port" id="dest_port_add" disabled></td>
+                            <td style="text-align: center; vertical-align: middle;">
+                                <label class="toggle-switch" style="margin: auto;">
+                                    <input type="checkbox" name="enable" id="enable_add" checked disabled>
+                                    <span class="slider"></span>
+                                </label>
+                            </td>
+                            <td style="text-align: center; vertical-align: middle;">
+                            </td>
+                        </tr>
+                        <tr id="row_edit_add" style="display: none;">
+                            <td colspan="8" style="text-align: center; vertical-align: middle;">
+                                <button class="quick-setup-apply" type="button" style="width:80px; margin-right: 20px; margin-bottom: 30px;" onclick="do_apply(-1, 'add')">Apply</button>   
+                                <button class="quick-setup-cancel" type="button" style="width:80px; margin-right: 20px;  margin-bottom: 30px;" onclick="do_cancel_add()">Cancel</button>   
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="row justify-content-center">
+            <button class="quick-setup-apply" type="button" name="" style="width:80px;" onclick="do_delete()">Delete</button>    
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="row justify-content-center">
+            <button class="quick-setup-apply" type="button" style="width:80px;" name="" onclick="do_add()">Add</button>   
+        </div>
+    </div>
+</form>
+<%+footer%>

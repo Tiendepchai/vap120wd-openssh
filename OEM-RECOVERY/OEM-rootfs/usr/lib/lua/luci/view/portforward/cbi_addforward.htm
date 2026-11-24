@@ -1,0 +1,201 @@
+<%-
+	local fw = require "luci.model.firewall".init()
+	local ds = require "luci.dispatcher"
+	local izl = { }
+	local ezl = { }
+	local _, z
+	for _, z in ipairs(fw:get_zones()) do
+		if z:name() ~= "wan" then
+			izl[#izl+1] = z
+		end
+		if z:name() ~= "lan" then
+			ezl[#ezl+1] = z
+		end
+	end
+	function getConfType(conf,type,option)
+		local curs=uci.cursor()
+		local op={}
+		local i=1
+		curs:foreach(conf,type,function(s)
+			for key,value in pairs(s) do
+				if key == option then
+					op[i]=value
+					i=i+1
+				end
+			end
+		end)
+		return op
+	end
+	local src_dports=getConfType("firewall","redirect","src_dport")
+	local src_dports_str=""
+	local num_entries=0
+	for i,src_dport in ipairs(src_dports) do 
+		num_entries=num_entries+1
+	end
+	for i=1,num_entries,1 do
+		if i == num_entries then
+			src_dports_str=src_dports_str..tostring(src_dports[i])
+		else
+			src_dports_str=src_dports_str..tostring(src_dports[i])..','
+		end
+	end
+-%>
+<div class="cbi-section-create cbi-tblsection-create">
+	<br />
+	<table class="cbi-section-table" style="width:810px; margin-left:5px">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell" colspan="8"><%:New port forward%>:</th>
+		</tr>
+		<tr class="cbi-section-table-descr">
+			<th class="cbi-section-table-cell"><%:Name%></th>
+			<th class="cbi-section-table-cell"><%:Protocol%></th>
+			<th class="cbi-section-table-cell" style="display:none;"><%:External zone%></th>
+			<th class="cbi-section-table-cell"><%:External port%></th>
+			<th class="cbi-section-table-cell" style="display:none;"><%:Internal zone%></th>
+			<th class="cbi-section-table-cell"><%:Internal IP address%></th>
+			<th class="cbi-section-table-cell"><%:Internal port%></th>
+			<th class="cbi-section-table-cell"></th>
+		</tr>
+		<tr class="cbi-section-table-row">
+			<td class="cbi-section-table-cell">
+				<input type="text" class="cbi-input-text" id="_newfwd.name" name="_newfwd.name" placeholder="<%:New port forward%>" />
+			</td>
+			<td class="cbi-section-table-cell" style="width:110px">
+				<select class="cbi-input-select" id="_newfwd.proto" name="_newfwd.proto">
+					<option value="tcp udp">TCP+UDP</option>
+					<option value="tcp">TCP</option>
+					<option value="udp">UDP</option>
+					<option value="other"><%:Other...%></option>
+				</select>
+			</td>
+			
+			<td class="cbi-section-table-cell" style="display:none;width:55px">
+				<select class="cbi-input-select" id="_newfwd.extzone" name="_newfwd.extzone">
+					<% for _, z in ipairs(ezl) do -%><option value="<%=z:name()%>"><%=z:name()%></option><%- end %>
+				</select>
+			</td>
+			
+			<td class="cbi-section-table-cell" style="width:110px">
+				<input type="text" class="cbi-input-text" id="_newfwd.extport" name="_newfwd.extport" />
+			</td>
+			
+			<td class="cbi-section-table-cell" style="display:none;width:55px">
+				<select class="cbi-input-select" id="_newfwd.intzone" name="_newfwd.intzone">
+					<% for _, z in ipairs(izl) do -%><option value="<%=z:name()%>"><%=z:name()%></option><%- end %>
+				</select>
+			</td>
+			
+			<td class="cbi-section-table-cell" style="width:110px">
+				<input type="text" class="cbi-input-text" id="_newfwd.intaddr" name="_newfwd.intaddr" />
+			</td>
+			<td class="cbi-section-table-cell" style="width:110px">
+				<input type="text" class="cbi-input-text" id="_newfwd.intport" name="_newfwd.intport" />
+			</td>
+			<td class="cbi-section-table-cell">
+				<span class="form-btn form-btn-add"><input type="submit" class="cbi-button" name="cbi.cts.<%=self.config%>.<%=self.sectiontype%>.<%=section%>" value="<%:Add%>" id="portforward_submit" onclick="return validateNewFwd()"/></span>
+			</td>
+		</tr>
+	</table>
+
+	<script type="text/javascript">//<![CDATA[
+
+		function validateNewFwd(){
+			var name = document.getElementById('_newfwd.name').value;
+			var ext_port = document.getElementById('_newfwd.extport').value;
+			var int_port = document.getElementById('_newfwd.intport').value;
+			var int_addr = document.getElementById('_newfwd.intaddr').value;
+
+			if(name.length == 0){
+				alert("Name can not be empty");
+				return false;
+			}
+			if(ext_port.length == 0){
+				alert("External port can not be empty");
+				return false;
+			}
+			if(int_port.length == 0){
+				alert("Internal port can not be empty");
+				return false;
+			}
+			if(int_addr.length == 0){
+				alert("Internal IP address can not be empty");
+				return false;
+			}
+			return true;
+		}
+
+		function validate_portforward() {
+			document.cbi.cbi_validators.push(function()
+			{
+				console.log("adfbjvjdsahvfkahdvfk");
+				var num_of_entries=<%=num_entries%>;
+				// alert(num_of_entries);
+				var j_src_dports_str = "<%=src_dports_str%>";
+				var j_src_dports = j_src_dports_str.split(",");
+				console.log(j_src_dports);
+				var j_cur_src_dport = document.getElementById('_newfwd.extport').value;
+				// alert(j_cur_src_dport);
+				console.log(j_cur_src_dport);
+				for(var i=0; i < j_src_dports.length; i++){
+					console.log()
+					if(parseInt(j_src_dports[i],10) == j_cur_src_dport){
+						console.log("huhu");
+						return false;
+					}
+				}
+				return true;
+			});
+			return cbi_validate_form(document.cbi, 'Some fields are invalid, cannot save values!');
+		}
+		
+		document.cbi.onsubmit = validate_portforward;
+
+		cbi_validate_field('_newfwd.extport', true, 'portrange');
+		cbi_validate_field('_newfwd.intaddr', true, 'host');
+		cbi_validate_field('_newfwd.intport', true, 'portrange');
+	
+		cbi_combobox_init('_newfwd.intaddr', {
+			<% first = true; luci.sys.net.ipv4_hints(function(ip, name) %>
+				<%- if first then first = false else %>,<% end -%>'<%=ip%>': '<%=ip%> (<%=name%>)'
+			<%- end) %> }, '', '<%: -- custom -- %>');
+	
+		cbi_bind(document.getElementById('_newfwd.extport'), 'blur',
+			function() {
+				var n = document.getElementById('_newfwd.name');
+				var p = document.getElementById('_newfwd.proto');
+				var i = document.getElementById('_newfwd.intport');
+				var hints = {
+				/*  port    name     0=both, 1=tcp, 2=udp, 3=other */
+					21:   [ 'FTP',   1 ],
+					22:   [ 'SSH',   1 ],
+					53:   [ 'DNS',   0 ],
+					80:   [ 'HTTP',  1 ],
+					443:  [ 'HTTPS', 1 ],
+					3389: [ 'RDP',   1 ],
+					5900: [ 'VNC',   1 ],
+				};
+
+				if (!this.className.match(/invalid/))
+				{
+					if (!i.value) i.value = this.value;
+
+					var hint = hints[this.value || 0] || hints[i.value || 0];
+					if (hint)
+					{
+						p.selectedIndex = hint[1];
+
+						if (!n.value)
+							n.value = hint[0];
+					}
+					else if (!n.value)
+					{
+						n.value = 'Forward' + this.value;
+					}
+				}
+			});
+	
+	
+		cbi_validate_field('cbi.cts.<%=self.config%>.<%=self.sectiontype%>.<%=section%>', true, 'uciname');
+
+	//]]></script>
+</div>

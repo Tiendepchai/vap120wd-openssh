@@ -1,0 +1,737 @@
+<%+header%>
+
+<%
+local sys   = require "luci.sys"
+local zones = require "luci.sys.zoneinfo"
+local fs    = require "nixio.fs"
+local conf  = require "luci.config"
+local uci   = require("luci.model.uci").cursor()
+local ec = require("escape_character")
+
+local max_ntp_server = 5
+local zonename = uci:get("system", "system", "zonename")
+local ntp_enable = uci:get("system", "ntp", "enabled")
+local enable_access_from_wan = uci:get("firewall", "access_from_wan", "target")
+local devicename = uci:get("device", "deviceinfo", "devicename")
+local ntp_server_list = uci:get_list("system", "ntp", "server")
+%>
+
+<style>
+
+    .warn-text
+    {
+        padding-left: 15px;
+        color: red;
+    }
+    @media (min-width: 576px) 
+    {
+        .form-inline label
+        {
+            justify-content: left;
+        }
+    }
+
+    input:disabled
+    {
+        background-color: darkgrey;
+    }
+    .input-group>.input-password
+    {
+        width: 1%;
+        flex: 1 1 auto;
+    }
+    .input-password
+    {
+        border-right: solid 0px !important;
+        border-radius: 3px 0 0 3px;
+        padding: .375rem .75rem;
+    }
+
+    .show-password-btn 
+    {
+        border: #adb5bd solid 1px !important;
+        border-left: solid 0px !important;
+        border-radius: 0 3px 3px 0;
+        background-color: #fff;
+        width: 30px;
+        padding-top: 7px;
+        padding-left: 7px;
+    }
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+    .fa-eye:hover
+    {
+        cursor: pointer;
+        color: #ec1b2e;
+    }
+    .fa-eye-slash:hover
+    {
+        cursor: pointer;
+        color: #ec1b2e;
+    }
+
+    h3, h4, h5, h6
+    {
+    font-weight: normal;
+    }
+
+</style>
+
+<script src="/luci-static/resources/monCon.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+
+<script type="text/javascript">
+
+    var ntpServerList = new Array();
+    var hasServer = new Array(<%=max_ntp_server%>);
+    <%
+        if(ntp_server_list) then
+            for k, v in pairs(ntp_server_list) do
+    %>
+    ntpServerList.push("<%=ec.escape_string_data(v)%>");
+    hasServer[<%=k%>-1] = 1; 
+
+    <%
+        end
+            end
+    %>
+    console.log("servers: %o", ntpServerList);
+    console.log(hasServer);
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "system", "clock_status")%>', null,
+		function(x, rv)
+		{
+			var s = document.getElementById('clock-status');
+			if (s)
+			{
+				s.innerHTML = rv.timestring || '?';
+			}
+		}
+	);
+
+	function sync_clock(btn)
+	{
+		btn.disabled = true;
+		btn.value    = '<%:Synchronizing...%>';
+
+		XHR.get('<%=luci.dispatcher.build_url("admin", "system", "clock_status")%>',
+			{ set: Math.floor((new Date()).getTime() / 1000) },
+			function()
+			{
+				btn.disabled = false;
+				btn.value    = '<%:Sync with browser%>';
+			}
+		);
+
+		return false;
+	}
+
+    function checkEnableNtpClient(){
+        if(document.time_sync_form.cb_enable_ntp_client.checked)
+        {
+            $('#ntp-server-div').show();                
+        }
+        else{
+            $('#ntp-server-div').hide();    
+        }
+    }
+    
+    function checkEnableAccessWan(){
+        // if(document.access_form.cb_enable_access_wan.checked)
+        // {
+        //     $('#http_port_div').show();     
+        //     $('#https_port_div').show();              
+        // }
+        // else{
+        //     $('#http_port_div').hide();     
+        //     $('#https_port_div').hide();    
+        // }
+    }
+
+    function check_strong_pwd(pwd){
+        var lower_char = /[a-z]/g;
+        var upper_char = /[A-Z]/g;
+        var number = /[0-9]/g;
+        var spec_char = /[!@#\$%\^\&*\)\(+=._-]/g;
+
+        if( pwd.length >=8 && pwd.match(lower_char) && pwd.match(upper_char) &&  pwd.match(number) && pwd.match(spec_char))
+            return true;
+        else
+            return false; 
+    }
+
+    function validate_devicename_form(){
+        var devicename = $('#devicename').val();
+        console.log("Devicename: " + devicename);
+        if($('#devicename').val().length == 0){
+            if (!confirm("Do you want to clear devicename of this AP?"))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function validate_admin_form(){
+        var old_pwd = $('#old_password').val();
+        var new_pwd = $('#new_password').val();
+        var cfm_pwd = $('#confirm_password').val();
+
+        if($('#old_password').val().length == 0 || $('#new_password').val().length == 0 | $('#confirm_password').val().length == 0){
+            //alert("Password can not be empty!");
+            $("#warn_pwd").text("Password can not be empty!");
+            $("#warn_pwd").show();
+            return false;
+        }
+        // if($('#new_password').val().indexOf(" ") >= 0 ){
+        //     //alert("New password does not include spaces");
+        //     $("#warn_pwd").text("New password does not include spaces");
+        //     $("#warn_pwd").show();
+        //     return false;
+        // }
+
+        // if($('#confirm_password').val() != $('#new_password').val()){
+        //     //alert("Given password confirmation did not match");
+        //     $("#warn_pwd").text("Given password confirmation did not match");
+        //     $("#warn_pwd").show();
+        //     return false;
+        // }
+
+        // if(check_strong_pwd($('#new_password').val()) == false){
+        //         return confirm("Strong password must be at least 8 characters long, using combination of uppercase and lowercase and number and special characters");
+        // }
+
+        return true;
+    }
+
+    function get_first_empty_entry() {          
+        var i;
+        for (i=0; i < <%=max_ntp_server%>; i++) {
+            if (hasServer[i] != 1) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function onloadFunction(){
+        //general form
+        <%
+        if zonename ~= nil then
+        %>
+        document.getElementById("time_zone_list").value = "<%=zonename%>";
+        <%else%>
+        document.getElementById("time_zone_list").value = "UTC";
+        <%end%>
+
+        console.log("timezone: <%=tostring(zonename)%>" );
+
+
+        //time sync form
+        <% if ntp_enable == "1" then %>
+        document.getElementById("cb_enable_ntp_client").checked = true;     
+        <%else%>
+        document.getElementById("cb_enable_ntp_client").checked = false;
+        <%end%>
+
+        for( let i = 0 ; i < <%=max_ntp_server%>; i++){
+            if(hasServer[i] == 1){
+                $("#ntp_server_" + i).val(ntpServerList[i]);
+                $("#ntp_server_cont_" + i).show();
+            }
+        } 
+
+        checkEnableNtpClient();
+
+        //admin form
+        
+        $('#old_password').val("<%=ec.escape_string_data(old_password)%>");
+        $('#new_password').val("<%=ec.escape_string_data(new_password)%>");
+        $('#confirm_password').val("<%=ec.escape_string_data(confirm_password)%>");
+        $("#change_flag").val("");
+        console.log("<%=tostring(validate_change_pwd)%>")
+        <%
+        if validate_change_pwd ~= nil then
+            if validate_change_pwd == "0" then
+        %>
+        alert("Password successfully changed!");
+        location.href = '<%=luci.dispatcher.build_url("admin", "logout")%>';
+
+        <%
+            elseif validate_change_pwd == "1" then
+        %>
+        alert("You entered the wrong old password!");
+        <%
+            elseif validate_change_pwd == "2" then
+        %>
+        alert("New password must not contain space character!");
+        <%
+            elseif validate_change_pwd == "3" then
+        %>
+        alert("The password confirmation does not match!");
+        <%
+            elseif validate_change_pwd == "4" then
+        %>
+        if(confirm("New password is weak! Do you want to continue?\nStrong password must be >=8 characters, using combination of uppercase, lowercase, number and special characters.")){
+
+            $("#change_flag").val("ready");
+            $('form#admin_form').submit();
+            //confirm_change_pwd();
+        }
+        <%
+            elseif validate_change_pwd == "5" then
+        %>
+        alert("Unknown error, the password was not changed!");
+        <%
+            elseif validate_change_pwd == "6" then
+        %>
+        alert("Old password and new password cannot be same!");
+            <%end%>    
+        <%end%>
+
+
+        //access form
+        <% if enable_access_from_wan == "ACCEPT" then %>
+        document.getElementById("cb_enable_access_wan").checked = true;      
+        <%else%>
+        document.getElementById("cb_enable_access_wan").checked = false;
+        <%end%>
+        checkEnableAccessWan();
+
+        <%
+        local  listen_http = uci:get("lighttpd", "main", "listen_http")
+        local  listen_https = uci:get("lighttpd", "main", "listen_https")
+        %>
+
+        $("#http_port").val("<%=tostring(listen_http)%>");
+        $("#https_port").val("<%=tostring(listen_https)%>");
+
+        $("#devicename").val("<%=ec.escape_string_data(devicename)%>") ;
+    }
+
+    function is_restricted_port(port){
+        var rest_port = ["0", "1", "5", "7", "9", "11", "13", "15", "17", "19", "20", "21", "22", "23", "25", "37", "42", "43", "53", "67", "68", "77", "79", "87", "95", "101", "102", "103", "104", "109", "110", "111", "113", "115", "117", "119", "123", "135", "139", "143", "161", "179", "389", "465", "512", "513", "514", "515", "526", "530", "531", "532", "540", "556", "563", "587", "601", "636", "993", "995", "1900", "2049", "3659", "4045", "5060", "5555", "6000", "6665", "6666", "6667", "6668", "6669", "8081", "8082", "8888"];
+        for(let i = 0 ;i < rest_port.length; i++){
+            if(Number(port) == Number(rest_port[i])) 
+                return true;
+        }
+        return false;
+
+    }
+
+    function validate_acess_form(){
+        $("#http_port").val($("#http_port").val().trim());
+        $("#https_port").val($("#https_port").val().trim());
+
+        var http_port = $('#http_port').val();
+        var https_port = $('#https_port').val();
+        console.log(http_port + "   " + https_port);
+
+        if($('#http_port').val().length == 0 ){
+            alert("HTTP port values are empty");
+            $('#http_port').focus();
+            return false; 
+        }
+
+        if($('#https_port').val().length == 0 ){
+            alert("HTTPS port values are empty");
+            $('#https_port').focus();
+            return false; 
+        }
+
+        if(Number(http_port) < 0 || Number(http_port) > 65535){
+            alert("The HTTP port number must be between 0 and 65535");
+            $('#http_port').focus();
+            return false; 
+        }
+
+        if(Number(https_port) < 0 || Number(https_port) > 65535){
+            alert("The HTTPS port number must be between 0 and 65535");
+            $('#https_port').focus();
+            return false; 
+        }
+
+        if (http_port == https_port){
+            alert("HTTP port and HTTPS port are the same");
+            $('#http_port').focus();
+            return false;
+        }
+
+        if(is_restricted_port(http_port) == true){
+            alert("The HTTP port you set is well known port or used by another service, please try with another port!");
+            $('#http_port').focus();
+            return false;
+        }
+
+        if(is_restricted_port(https_port) == true){
+            alert("The HTTPS port you set is well known port or used by another service, please try with another port!");
+            $('#https_port').focus();
+            return false;
+        }
+
+        return true;
+    }
+
+    function rearrange_rows(){
+        var i,j;
+        for (i = 0; i < <%=max_ntp_server%>; i++) {
+            $('#ntp_server_'+i).val($('#ntp_server_'+i).val().trim());
+            if (hasServer[i] == 1) {
+                $('#ntp_server_'+i).show();
+            }
+            else {
+                for (j = i+1; j < <%=max_ntp_server%>;j++) {
+                    if (hasServer[j] == 1) {
+                        $("#ntp_server_"+i).val($("#ntp_server_"+j).val());
+                        hasServer[i] = 1;
+                        hasServer[j] = 0;
+                        $('#ntp_server_cont_'+i).show();
+                        $('#ntp_server_cont_'+j).hide();
+                        $("#ntp_server_"+j).val("");
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    function delete_ntp_server(i){
+        $("#ntp_server_cont_" + <%=max_ntp_server%>).show();
+        $("#ntp_server_cont_" + i).hide();
+        $("#ntp_server_" + i).val("");
+        hasServer[i] = 0;
+        rearrange_rows();
+    }
+
+    function validate_time_sync_form(){
+
+    }
+
+    function add_new_ntp_server(index){
+        var i = get_first_empty_entry();
+        console.log("empty: " + i);
+        if (i == (<%=max_ntp_server%> - 1)) {
+            $("#ntp_server_cont_" + <%=max_ntp_server%>).hide();
+        }
+        if (i < 0) {
+            alert("NTP server candidates is full");
+            return;
+        }
+        $("#ntp_server_" + i).val($("#ntp_server_" + <%=max_ntp_server%>).val());
+        $("#ntp_server_" + <%=max_ntp_server%>).val("");
+        $("#ntp_server_cont_" +i).show();
+        hasServer[i] = 1;
+
+    }
+
+    function doSubmitAccess(){
+        if(validate_acess_form() == false)
+            return;
+
+        var submitData = {};
+        if(document.access_form.cb_enable_access_wan.checked)  
+            submitData.cb_enable_access_wan = "on";
+
+        submitData.http_port = $('#http_port').val();
+        submitData.https_port = $("#https_port").val();
+
+        $("#config_access").hide();
+        $("#loading_access").show();
+        $.ajax({
+            url: '<%=luci.dispatcher.build_url("admin", "system", "system", "apply_access")%>',
+            type: 'POST',  
+            data: submitData,
+            complete: function() {   
+                    location.reload(); 
+                },
+        });
+    }
+
+    function showPwd(id){
+        if(id == 0){
+            document.getElementById('old_password').type = "text";
+            $("#old_pwd_eye").hide();
+            $("#old_pwd_eye_slash").show();
+        }
+        if(id == 1){
+            document.getElementById('new_password').type = "text";
+            $("#new_pwd_eye").hide();
+            $("#new_pwd_eye_slash").show();
+        }
+        if(id == 2){
+            document.getElementById('confirm_password').type = "text";
+            $("#confirm_pwd_eye").hide();
+            $("#confirm_pwd_eye_slash").show();
+        }
+
+    }
+
+    function hidePwd(id){
+        if(id == 0){
+            document.getElementById('old_password').type = "password";
+            $("#old_pwd_eye").show();
+            $("#old_pwd_eye_slash").hide();
+        }
+        if(id == 1){
+            document.getElementById('new_password').type = "password";
+            $("#new_pwd_eye").show();
+            $("#new_pwd_eye_slash").hide();
+        }
+        if(id == 2){
+            document.getElementById('confirm_password').type = "password";
+            $("#confirm_pwd_eye").show();
+            $("#confirm_pwd_eye_slash").hide();
+        }
+    }
+
+    function toggle_password(e, eye_ele)
+    {
+        var cur_type = $("[id='" + e + "']").attr("type");
+
+        if (cur_type == "password")
+        {
+            $("[id='" + e + "']").attr("type", "text");
+            $(eye_ele).removeClass("fa-eye-slash");
+            $(eye_ele).addClass("fa-eye");
+        }
+        else if (cur_type == "text")
+        {
+            $("[id='" + e + "']").attr("type", "password");
+            $(eye_ele).removeClass("fa-eye");
+            $(eye_ele).addClass("fa-eye-slash");
+        }
+    }
+
+    window.onload = function () {
+        //AP-504
+        if (window.location.href.indexOf("stok") > 0)
+            setupTimers();
+
+        onloadFunction();
+    }
+</script>
+
+
+<legend><h2>System</h2></legend> <!-- General form -->
+<form method="post" id="general-form" class="form-inline" action="<%=luci.dispatcher.build_url("admin", "system", "system", "apply_general")%>" onsubmit="" autocomplete="false">
+    <div class="widget col-xs-12 col-lg-12 mb-5">  
+        <legend><h3>General</h3></legend>      
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="col-lg-12 mb-3" id="general_field">
+                <div class="form-group mb-2">
+                    <label for="clock-status" class="col-lg-4">Local Time</label>
+                    <span id="clock-status"><em><%:Collecting data...%></em></span>
+                    <!-- <span ><input type="button" class="cbi-button" style="margin-left: 25%;" id="syncButton" value="<%:Sync with browser%>" onclick="return sync_clock(this)" /></span> -->
+                </div>
+
+                <div class="form-group mb-2">
+                    <label for="time_zone_list" class="col-lg-4">Timezone</label>
+                    <select class="form-select" name="time_zone" id="time_zone_list">
+                        <option value="UTC">UTC</option>
+                    <%
+                    for i, zone in ipairs(zones.TZ) do
+                    %>
+                        <option value="<%=zone[1]%>"><%=zone[1]%></option>
+                    <%end%>
+                    </select>
+                </div>
+            </fieldset>
+        </div>
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" id="btn-apply-general" type="submit" value="Apply">
+        </div>
+    </div>
+</form> 
+
+<form method="post" name="time_sync_form"" id="time_sync_form" class="form-inline" style="margin-top: -50px;" action="<%=luci.dispatcher.build_url("admin", "system", "system", "apply_time_sync")%>" onsubmit="return validate_time_sync_form()" autocomplete="false">
+    <div class="widget col-xs-12 col-lg-12 mb-5">  
+        <legend><h3>Time Synchronization</h3></legend>   
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="col-lg-12 mb-3" id="setting_field">
+                <div class="form-group mb-2">
+                    <label for="cb_enable_ntp_client" class="col-lg-4">Enable NTP client</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="cb_enable_ntp_client" id="cb_enable_ntp_client" onchange="checkEnableNtpClient()">
+                        <span class="slider"></span>
+                    </label>            
+                </div> 
+
+                <div class="form-group mb-2"  style="display:none" id="ntp-server-div">
+                    <label class="col-lg-4">NTP server candidates</label>
+                    <div class="row col-md-6 offset-md-3">
+                    <%for i = 0, max_ntp_server, 1 do%>
+                        <div class="col-md-10" align="center" id="ntp_server_cont_<%=i%>" style="<%if i ~= max_ntp_server then%> display: none; <%end%>; margin-top: 1%; margin-left: 12px;"> 
+                            <input name="ntp_server_<%=i%>" id="ntp_server_<%=i%>" type="text">
+                        <%if i == max_ntp_server then%>
+                            <em class="fas fa-plus ml-1" style="color: green;" onclick="add_new_ntp_server()"></em>
+                        <%else%>
+                            <em class="fas fa-minus ml-1" style="color: red;" onclick="delete_ntp_server(<%=i%>)"></em>
+                        <%end%>
+                        </div>
+                    <%end%>
+                    </div>
+                </div> 
+
+            </fieldset>
+        </div>
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" id="btn-apply-time-sync" type="submit" value="Apply">
+        </div>
+    </div>
+</form> 
+
+<form method="post" name="admin_form"" id="admin_form" class="form-inline" style="margin-top: -50px;" action="<%=luci.dispatcher.build_url("admin", "system", "system", "apply_admin")%>" onsubmit="return validate_admin_form()" autocomplete="false">
+    <input type="hidden" name="step" value="1" />
+    <div class="widget col-xs-12 col-lg-12 mb-5"> 
+        <legend><h3>Administration</h3></legend>   
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="col-lg-12 mb-3" id="setting_field_admin">
+                <div class="form-group mb-2">
+                    <label  class="col-lg-4">Current Password</label>
+                    <div class="input-group">
+                        <input type="password" class="input-password" name="old_password" id="old_password" value="">
+                        <div class="input-group-addon show-password-btn">
+                            <i class="fa fa-eye-slash" aria-hidden="true" onclick="toggle_password('old_password', this)"></i>
+                        </div>
+                    </div>
+
+                    <!-- <img src="/luci-static/resources/cbi/reload.gif" style="vertical-align:middle" title="Reveal/hide password" onclick="var e = document.getElementById('old_password'); e.type = (e.type=='password') ? 'text' : 'password';"> -->
+                </div> 
+                <div class="form-group mb-2">
+                    <label  class="col-lg-4">New Password</label>
+                    <div class="input-group">
+                        <input type="password" class="input-password" name="new_password" id="new_password">
+                        <div class="input-group-addon show-password-btn">
+                            <i class="fa fa-eye-slash" aria-hidden="true" onclick="toggle_password('new_password', this)"></i>
+                        </div>
+                    </div>
+                    <!-- <img src="/luci-static/resources/cbi/reload.gif" style="vertical-align:middle" title="Reveal/hide password" onclick="var e = document.getElementById('new_password'); e.type = (e.type=='password') ? 'text' : 'password';"> -->
+                </div> 
+                <div class="form-group mb-2">
+                    <label  class="col-lg-4">Confirmation</label>
+                    <div class="input-group">
+                        <input type="password" class="input-password" name="confirm_password" id="confirm_password">
+                        <div class="input-group-addon show-password-btn">
+                            <i class="fa fa-eye-slash" aria-hidden="true" onclick="toggle_password('confirm_password', this)"></i>
+                        </div>
+                        <input type="input" style="display: none;" name="change_flag" id="change_flag">
+                    </div>
+                    <!-- <img src="/luci-static/resources/cbi/reload.gif" style="vertical-align:middle" title="Reveal/hide password" onclick="var e = document.getElementById('confirm_password'); e.type = (e.type=='password') ? 'text' : 'password';"> -->
+                </div>
+                <div class="form-group offset-md-4">
+                    <div>
+                        <em class="fas fa-question-circle color-stt-light-blue"></em>
+                        Strong password must be >=8 characters, using combination of uppercase, lowercase, number and special characters.
+                    </div> 
+                </div>
+
+
+            </fieldset>
+            <!-- <% if tostring(validate_change_pwd) == "1" then%> 
+            <div class="form-group mb-3" style="margin-left:3.2%" >
+                <label class="cbi-section-error" id="warn_pwd">You entered the wrong old password!</label>
+            </div>
+            <%elseif tostring(validate_change_pwd) == "2" then%>
+            <div class="form-group mb-3">
+                <label class="cbi-section-error" id="warn_pwd">New password must not contain space character!</label>
+            </div>
+            <%elseif tostring(validate_change_pwd) == "3" then%>
+            <div class="form-group mb-3">
+                <label class="cbi-section-error" id="warn_pwd">The password confirmation does not match!</label>
+            </div>
+            <%elseif tostring(validate_change_pwd) == "5" then%>
+            <div class="form-group mb-3">
+                <label class="cbi-section-error" id="warn_pwd">Unknown error, the password was not changed!</label>
+            </div>
+            <%elseif tostring(validate_change_pwd) == "6" then%>
+            <div class="form-group mb-3">
+                <label class="cbi-section-error" id="warn_pwd">Old password and new password cannot be same!</label>
+            </div>
+            <%else%>
+            <div class="form-group mb-3">
+                <label class="cbi-section-error" id="warn_pwd" style="display: none;"></label>
+            </div>
+            <%end%> -->
+        </div>
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" id="btn-apply-admin" type="submit" value="Apply">
+        </div>
+    </div>
+</form>
+
+<form method="post" name="devicename_form" id="devicename_form" class="form-inline" style="margin-top: -50px;" action="<%=luci.dispatcher.build_url("admin", "system", "system", "apply_devicename")%>" onsubmit="return validate_devicename_form()" autocomplete="false">
+    <div class="widget col-xs-12 col-lg-12 mb-5">
+        <legend><h3>Device Name</h3></legend>
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="cbi-section" id="loading_devicename" style="display:none">;
+                <p>
+                    <img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" />
+                    <%:Waiting for changes to be applied...%>
+                </p>
+            </fieldset>
+            <fieldset class="col-lg-12 mb-3" id="config_devicename">
+                <div class="form-group mb-2" id="devicename_div">
+                    <label for="devicename" class="col-lg-4">Device Name</label>
+                    <input name="devicename" id="devicename" type="text">
+                </div>
+            </fieldset>
+        </div>
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" id="btn-apply-devicename" type="submit" value="Apply">
+        </div>
+    </div>
+</form>
+
+<!--Form for Access Management-->
+<form method="post" name="access_form" id="access_form" class="form-inline" style="margin-top: -50px;" action="<%=luci.dispatcher.build_url("admin", "system", "system", "apply_access")%>" onsubmit="return validate_acess_form()" autocomplete="false">
+    <div class="widget col-xs-12 col-lg-12 mb-5">
+        <legend><h3>Access Management</h3></legend>   
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="cbi-section" id="loading_access" style="display:none">;
+                <p>
+                    <img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" />
+                    <%:Waiting for changes to be applied...%>
+                </p>
+            </fieldset>
+            <fieldset class="col-lg-12 mb-3" id="config_access">
+                <div class="form-group mb-2">
+                    <label for="cb_enable_access_wan" class="col-lg-4">Enable Access From WAN</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="cb_enable_access_wan" id="cb_enable_access_wan" onchange="checkEnableAccessWan()">
+                        <span class="slider"></span>
+                    </label>   
+                </div> 
+
+                <div class="form-group mb-2" id="http_port_div">
+                    <label class="col-lg-4">Config HTTP port</label>
+                    <input  name="http_port" id="http_port" type="text">
+                </div> 
+
+                <div class="form-group mb-2" id="https_port_div">
+                    <label class="col-lg-4">Config HTTPS port</label>
+                    <input name="https_port" id="https_port" type="text">
+                </div> 
+
+            </fieldset>
+        </div>
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" id="btn-apply-access-wan" type="button" onclick="doSubmitAccess()" value="Apply">
+        </div>
+    </div>
+</form>
+
+<%+footer%>

@@ -1,0 +1,724 @@
+<%+header%>
+
+<%
+local max_dns_server = 5
+local sys   = require "luci.sys"
+local zones = require "luci.sys.zoneinfo"
+local fs    = require "nixio.fs"
+local conf  = require "luci.config"
+local uci   = require("luci.model.uci").cursor()
+
+local cur_lan_ip = uci:get("network", "lan", "ipaddr")
+local str_dns_server = uci:get("dhcp", "lan", "dhcp_option")
+function split(inputstr, sep)
+    if inputstr == nil then
+        return nil
+    end
+   if sep == nil then
+      sep = "%s"
+   end
+   local t={}
+   for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+      table.insert(t, str)
+   end
+   return t
+end
+
+local ipv4_addr = uci:get("network", "lan", "ipaddr")
+local ipv4_mask = uci:get("network", "lan", "netmask")
+local enable_ipv6 = uci:get("network", "lan", "ipv6")
+
+local disable_dhcpv4 = uci:get("dhcp", "lan", "ignore")
+local dhcpv4_start =  uci:get("dhcp", "lan", "start")
+local dhcpv4_limit =  uci:get("dhcp", "lan", "limit")
+local dhcpv4_leasetime =  uci:get("dhcp", "lan", "leasetime")
+local dns_mode = uci:get("dhcp", "lan", "dns_mode") 
+local dns_server_list = split(str_dns_server, ",")
+if dns_server_list then
+    table.remove(dns_server_list,1)
+end
+
+local static_leases_tbl = {}
+
+uci:foreach("dhcp", "host",
+	function(x)
+		table.insert(static_leases_tbl, x)
+	end
+)
+
+%>
+<script src="/luci-static/resources/monCon.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+
+<style>
+
+    .warn-text
+    {
+        padding-left: 15px;
+        color: red;
+    }
+    @media (min-width: 576px) 
+    {
+        .form-inline label
+        {
+            justify-content: left;
+        }
+    }
+
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+
+    h3, h4, h5, h6
+    {
+    font-weight: normal;
+    }
+</style>
+
+<script src="/luci-static/resources/monCon.js"></script>
+<script src="/luci-static/resources/util.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+
+<script>
+
+    var staticLeaseCfg = new Array();
+    var dnsServerList = new Array();
+    
+    var hasServer = new Array(<%=max_dns_server%>);
+
+    <%if static_leases_tbl then
+        for k, v in pairs(static_leases_tbl) do%>
+    staticLeaseCfg.push("<%=v[".name"]%>");
+        <%end
+    end%>
+
+
+
+    <%
+        if(dns_server_list) then
+            for k, v in pairs(dns_server_list) do
+    %>
+    dnsServerList.push("<%=v%>");
+    hasServer[<%=k%>-1] = 1; 
+    <%
+        end
+            end
+    %>
+        
+    function get_first_empty_entry() {          
+        var i;
+        for (i=0; i < <%=max_dns_server%>; i++) {
+            if (hasServer[i] != 1) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function isNumber(num){
+        var reg = /^\d+$/;
+        if(num.match(reg))
+            return true;
+        return false;
+    }
+
+    function isValidLease(ltime){
+        var unit = ltime.replace(/[0-9]/g,'');
+        var num = parseInt(ltime)
+        var lastChar = ltime.substr(ltime.length - 1);
+        if(num == "NaN" || ( unit != "" && lastChar != unit)){
+            alert("Invalid leasetime format");
+            $("#dhcp_leasetime").focus();
+            return false;
+        }
+        if(num <= 0){
+            alert("Leasetime cannot be zero");
+            $("#dhcp_leasetime").focus();
+            return false;  
+        }
+        if(unit == "" || unit == "s"){
+            alert("Invalid time unit. Please enter one of following unit: m, h, d, w ");
+            $("#dhcp_leasetime").focus();
+            return false;
+        }
+        else if(unit == "m"){
+            if(num < 180){
+                alert("Leasetime must be greater than or equal to 180m");
+                $("#dhcp_leasetime").focus();
+                return false;
+            } 
+        }
+        else if(unit == "h"){
+            if(num < 3){
+                alert("Leasetime must be greater than or equal to 3h");
+                $("#dhcp_leasetime").focus();
+                return false;
+            } 
+        }
+        else if(unit != "s" && unit != "m" && unit != "h" && unit != "d" && unit != "w"){
+            alert("Invalid time unit. Please enter one of following unit: m, h, d, w ");
+            $("#dhcp_leasetime").focus();
+            return false;
+        }
+        return true;
+    }
+
+
+    function validate_form(){
+
+        $("#addr4").val($("#addr4").val().trim());
+        $("#mask4").val($("#mask4").val().trim());
+        $("#dhcp_start").val($("#dhcp_start").val().trim());
+        $("#dhcp_end").val($("#dhcp_end").val().trim());
+        
+        for(let i = 0; i <= <%=max_dns_server%>; i++){
+            $("#dns_server_" + i).val($("#dns_server_" + i).val().trim());
+        }
+
+        $("#dhcp_leasetime").val($("#leasetime option:selected").text().trim());
+        rearrange_rows();
+
+        if(isValidIpAddress($("#addr4").val()) == false){
+            alert("Invalid IPv4 address!");
+            $("#addr4").focus();
+            return false;
+        }
+
+        if($("#mask4").val() == "0.0.0.0" || $("#mask4").val() == "255.255.255.255" || isValidSubnetMask($("#mask4").val()) == false ){
+            alert("Invalid IPv4 netmask");
+            $("#mask4").focus();
+            return false;
+        }
+
+        if(document.getElementById("enable_dhcp4").checked == true){
+            var start = $("#dhcp_start").val();
+            var end = $("#dhcp_end").val();
+            console.log(start + " " + end);
+            if(isNumber(start) == false){
+                alert("Start must be a number!");
+                $("#dhcp_start").focus();
+                return false;   
+            }
+            if(isNumber(end) == false){
+                alert("End must be a number!");
+                $("#dhcp_end").focus();
+                return false;   
+            }
+            start = parseInt(start);
+            end = parseInt(end);
+            if(start > end){
+                alert("Start must be smaller than or equal to End!");
+                $("#dhcp_start").focus();
+                return false;
+            }
+
+            if(isValidLease( $("#dhcp_leasetime").val()) == false)
+                return false;
+            if($("#dnsv4_mode option:selected").text().trim() == "Static"){
+                var allEmpty = true;
+                for(let i = 0; i <= <%=max_dns_server%>; i++){
+                    if( $("#dns_server_" + i).val() != ""){
+
+                        if(isValidIpAddress($("#dns_server_" + i).val()) == false){
+                            allEmpty = false;
+                            alert("Invalid Custom DNS server!");
+                            $("#dns_server_" + i).focus();
+                            return false;
+                        }
+                        allEmpty = false;
+                    }
+                }
+                if(allEmpty == true){
+                    alert("Please enter at least one Custome DNS Server");
+                    return false;
+                }
+            }
+        }
+
+
+
+        //static lease
+        var isValidStaticLease = true;
+        staticLeaseCfg.forEach(cfg_name =>{
+            if(isValidStaticLease == false) return false;
+            $("#lease_name_" + cfg_name).val($("#lease_name_" + cfg_name).val().trim());
+            $("#lease_mac_" + cfg_name).val($("#lease_mac_" + cfg_name).val().trim());
+            $("#lease_ip_" + cfg_name).val($("#lease_ip_" + cfg_name).val().trim());
+
+            var name = $("#lease_name_" + cfg_name).val();
+            var mac =  $("#lease_mac_" + cfg_name).val();
+            var ip = $("#lease_ip_" + cfg_name).val();
+            if(name != "" || mac != "" || ip != ""){
+                if(isValidName(name) ==  false){
+                    alert("Invalid Static lease Hostname!");
+                    $("#lease_name_" + cfg_name).focus();
+                    isValidStaticLease = false;
+                    return false; 
+                }
+                if(isValidMacAddress(mac) ==  false){
+                    alert("Invalid Static lease MAC address!");
+                    $("#lease_mac_" + cfg_name).focus();
+                    isValidStaticLease = false;
+                    return false; 
+                }
+                if(isValidIpAddress(ip) ==  false){
+                    alert("Invalid Static lease IP address!");
+                    $("#lease_ip_" + cfg_name).focus();
+                    isValidStaticLease = false;
+                    return false; 
+                }
+            }
+            else{
+                    alert("Static lease cannot be empty!");
+                    $("#lease_name_" + cfg_name).focus();
+                    isValidStaticLease = false;
+                    return false;  
+                }
+        });
+        if(isValidStaticLease == true)
+            return true;
+        else        
+            return false;
+    }
+
+    function add_new_dns_server(index){
+        var i = get_first_empty_entry();
+        if (i == (<%=max_dns_server%> - 1)) {
+            $("#dns_server_cont_" + <%=max_dns_server%>).hide();
+        }
+        if (i < 0) {
+            alert("Custom DNS server list is full");
+            return;
+        }
+        $("#dns_server_" + i).val($("#dns_server_" + <%=max_dns_server%>).val());
+        $("#dns_server_" + <%=max_dns_server%>).val("");
+        $("#dns_server_cont_" +i).show();
+        hasServer[i] = 1;
+    }
+
+    function rearrange_rows(){
+        var i,j;
+        for (i = 0; i < <%=max_dns_server%>; i++) {
+            $('#dns_server_'+i).val($('#dns_server_'+i).val().trim());
+            if (hasServer[i] == 1) {
+                $('#dns_server_'+i).show();
+            }
+            else {
+                for (j = i+1; j < <%=max_dns_server%>;j++) {
+                    if (hasServer[j] == 1) {
+                        $("#dns_server_"+i).val($("#dns_server_"+j).val());
+                        hasServer[i] = 1;
+                        hasServer[j] = 0;
+                        $('#dns_server_cont_'+i).show();
+                        $('#dns_server_cont_'+j).hide();
+                        $("#dns_server_"+j).val("");
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    function delete_dns_server(i){
+        $("#dns_server_cont_" + <%=max_dns_server%>).show();
+        $("#dns_server_cont_" + i).hide();
+        $("#dns_server_" + i).val("");
+        hasServer[i] = 0;
+        rearrange_rows();
+    }
+
+    function toggle_dhcpv4(){
+        var status = document.getElementById("enable_dhcp4").checked;
+        var dns4_mode = document.getElementById("dnsv4_mode").value;
+        if(status){
+            $("#div_dhcp_start").show();
+            $("#div_dhcp_end").show();
+            $("#div_dhcp_leasetime").show();
+            $("#div_dnsv4_mode").show();
+
+            if(dns4_mode == "Static")
+                $("#div_custom_dns_server").show();
+            else
+                $("#div_custom_dns_server").hide();
+        }
+        else{
+            $("#div_dhcp_start").hide();
+            $("#div_dhcp_end").hide();
+            $("#div_dhcp_leasetime").hide();
+            $("#div_dnsv4_mode").hide();
+            $("#div_custom_dns_server").hide();
+        }
+    }
+
+    function check_leasetime_opt(){
+        var x = document.getElementById("leasetime").value;
+        if(x == "custom"){
+            $("#leasetime").hide();
+            $("#other_time").show();
+            $("#other_time").focus();
+        }
+        else{
+            $("#leasetime").show();
+            $("#other_time").hide(); 
+        }
+    }
+
+    function verify_custom_time(){
+        var myInput = document.getElementById("other_time");
+            if(myInput && myInput.value){
+                var opt = " option[value='custom_opt']";
+                $("#leasetime" + opt).remove();
+                $("#leasetime").append($('<option>', {
+                    value: "custom_opt",
+                    text: myInput.value
+                }));
+            document.getElementById("leasetime").value= "custom_opt";
+            }
+            else{
+                document.getElementById("leasetime").value= "1h";
+            }
+            // $("#leasetime").html($("#leasetime option").sort(function (a, b) {
+            //     return a.text == b.text ? 0 : a.text > b.text ? -1 : 1
+            // }))
+            
+            $("#other_time").hide();
+            $("#leasetime").show(); 
+            
+    }
+
+    function isValidSubnetMask(subnet){
+        var regex = /^(((255\.){3}(255|254|252|248|240|224|192|128|0+))|((255\.){2}(255|254|252|248|240|224|192|128|0+)\.0)|((255\.)(255|254|252|248|240|224|192|128|0+)(\.0+){2})|((255|254|252|248|240|224|192|128|0+)(\.0+){3}))$/;
+        if(subnet.match(regex))
+            return true;
+        return false;
+    }
+    function toggle_dnsv4_mode(source){
+        //var x = document.getElementById("Static").value;
+        var x = source.value;
+        if(x == "Static"){
+            $("#div_custom_dns_server").show();
+        }
+        else{
+            $("#div_custom_dns_server").hide();
+        }
+    }
+
+    function load(){
+        //load leasetime info
+        <%if dhcpv4_leasetime then%>
+        var leaseTime = "<%=dhcpv4_leasetime%>"
+        if(leaseTime == "3h" || leaseTime == "12h" || leaseTime == "1d"){
+            document.getElementById("leasetime").value = leaseTime; 
+        }
+        else{
+            var opt = " option[value='custom_opt']";
+            $("#leasetime" + opt).remove();
+            $("#leasetime").append($('<option>', {
+                value: "custom_opt",
+                text: "<%=dhcpv4_leasetime%>"
+            }));
+            document.getElementById("leasetime").value= "custom_opt";
+        }
+        <%end%>
+
+        //load dns mdoe info
+        <%if dns_mode then%>
+        console.log(dnsServerList);
+        document.getElementById("dnsv4_mode").value = "<%=dns_mode%>";
+
+        if("<%=dns_mode%>" == "Static"){
+            for( let i = 0 ; i < <%=max_dns_server%>; i++){
+                if(hasServer[i] == 1){
+                    $("#dns_server_" + i).val(dnsServerList[i]);
+                    $("#dns_server_cont_" + i).show();
+                }
+            }  
+            $("#div_custom_dns_server").show();
+        }else{
+            $("#div_custom_dns_server").hide();  
+        }
+        
+        <%end%> 
+
+        toggle_dhcpv4();
+
+        //load static leases info
+    }
+
+    window.onload = function () {
+        if (window.location.href.indexOf("stok") > 0)
+            setupTimers();
+        load();
+    }
+
+    function add_lease(){
+        $("#img_loading").show();
+        $("#btn_add").hide();
+
+
+        $.post( "<%=luci.dispatcher.build_url("admin", "network", "lan_cfg_static_lease")%>", { operation: "add"}, function( data ) {
+            console.log( data.cfg_name );
+            var name = data.cfg_name;
+            staticLeaseCfg.push(name);
+            var markup = '<tr class="cbi-section-table-row" id="row_'
+                + name +
+                '"><td class="cbi-value-field"><input type="text" class="cbi-input-text" id="lease_name_'
+                + name +
+                '" name="lease_name_' 
+                + name +
+                '"></td><td class="cbi-value-field"><input type="text" class="cbi-input-text" id="lease_mac_' 
+                + name + 
+                '" name="lease_mac_'
+                + name +
+                '"></td><td class="cbi-value-field"><input type="text" class="cbi-input-text" id="lease_ip_'
+                + name + 
+                '" name="lease_ip_'
+                + name +
+                '"></td><td class="cbi-section-table-cell"><span class="form-btn form-btn-remove" id="btn_del_'
+                + name +
+                '"><input class="cbi-button" type="button" value="Delete" onclick="del_lease(\'' + name + '\')"/></span><span id = "del_loading_'
+                + name + 
+                '" style="display: none;">Loading...</span></td></tr>'
+            var tableBody = $("#table_static_leases tbody");
+            tableBody.append(markup);
+            $("#img_loading").hide();
+            $("#btn_add").show();
+        }, "json");
+    }
+
+    function del_lease(name){
+
+        $("#del_loading_" + name).show();
+        $("#btn_del_" + name).hide();
+        $.post( "<%=luci.dispatcher.build_url("admin", "network", "lan_cfg_static_lease")%>", { operation: "del", cfg_name: name}, function( data ) {
+            if(data.status == "ok"){
+                console.log("remove row_" + name);
+                var id = staticLeaseCfg.findIndex((x) => x === name);
+                if(id > -1){}
+                    staticLeaseCfg.splice(id, 1);
+                $('#row_' + name).remove();
+                //location.href = "<%=luci.dispatcher.build_url("admin", "network", "lan")%>";
+            }
+            else{
+                alert("Something wrong, please reload the page!");
+            }
+        }, "json");
+    }
+
+    function do_submit(){
+        if(validate_form() == false) return false;
+        $("#lan_form").hide();
+        $("#applying_form").show();
+        $('form#lan_form').submit();
+
+        var cur_lan_ip = "<%=cur_lan_ip%>"
+        var sel_ip_lan = $("#addr4").val();
+        var interval = window.setInterval(function() {
+            var img = new Image();
+            img.onload = function() {
+                window.clearInterval(interval);
+                if( cur_lan_ip == sel_ip_lan)
+                    location.href = ('https:' == document.location.protocol ? 'https://' : 'http://') + sel_ip_lan + '<%=luci.dispatcher.build_url("admin", "network","lan")%>';
+                else
+                    location.href = ('https:' == document.location.protocol ? 'https://' : 'http://') + sel_ip_lan;
+            };
+
+            img.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + sel_ip_lan + '<%=resource%>/icons/loading.gif?' + Math.random();
+        }, 3000);
+    }
+
+    qlabel_status = 0;
+    function display_question_label() {
+        qlabel_status = qlabel_status ^ 1
+        if (qlabel_status)
+        {
+            document.getElementById("question_label").style.display = "block";
+        }
+        else
+        {
+            document.getElementById("question_label").style.display = "none";
+        }
+    }
+
+</script>
+<form  id="applying_form" style="display:none">
+    <div>
+        <h2><a>Applying Settings</a></h2>
+    </div>
+    <div class="alert-message" id="BusyMsg">
+        <img src="<%=resource%>/icons/loading.gif" alt="" style="vertical-align:middle" />
+        <big><strong>Please wait while the settings are being applied.</strong></big>
+    </div>
+</form>
+
+<form method="post" id="lan_form" name="lan_form" class="form-inline" action="<%=luci.dispatcher.build_url("admin", "network","lan_apply")%>" autocomplete="off">
+    <legend><h2>LAN Configuration</h2></legend>
+    <div class="widget col-xs-12 col-lg-12 mb-5" id="">
+        <legend><h3>IP address configuration</h3></legend>   
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="col-lg-12 mb-3">
+                <div class="form-group mb-3" id="div_ipv4_addr">
+                    <label class="col-lg-4">IPv4 address</label>
+                    <input  name="addr4" id="addr4" type="text" <%if ipv4_addr then %>value="<%=ipv4_addr%>" <%end%> >
+                </div> 
+                <div class="form-group mb-3" id="div_ipv4_mask">
+                    <label class="col-lg-4">IPv4 netmask</label>
+                    <input  name="mask4" id="mask4" type="text" <%if ipv4_mask then %>value="<%=ipv4_mask%>" <%end%> >
+                </div> 
+                <div class="form-group mb-3">
+                    <label class="col-lg-4">Enable IPv6</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="enable_ip6" id="enable_ip6" <%if enable_ipv6 and enable_ipv6 == "0" then %><%else%>checked<%end%>>
+                        <span class="slider"></span>
+                    </label>                 
+                </div> 
+            </fieldset>
+        </div>
+    </div>
+    <div class="widget col-xs-12 col-lg-12 mb-5" id="">
+        <legend><h3>DHCP Configuration</h3></legend> 
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="col-lg-12 mb-3">
+                <div class="form-group mb-3">
+                    <label class="col-lg-4">Enable DHCPv4</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="enable_dhcp4" id="enable_dhcp4" onchange="toggle_dhcpv4()" <%if disable_dhcpv4 and disable_dhcpv4 == "1" then %><%else%>checked<%end%> >
+                        <span class="slider"></span>
+                    </label> 
+                </div>
+                
+                <div class="form-group mb-3" id="div_dhcp_start">
+                    <label class="col-lg-4">Start</label>
+                    <input  name="dhcp_start" id="dhcp_start" type="text" <%if dhcpv4_start then %>value="<%=dhcpv4_start%>" <%end%> >
+                </div> 
+                <div class="form-group mb-3" id="div_dhcp_end">
+                    <label class="col-lg-4">End</label>
+                    <input  name="dhcp_end" id="dhcp_end" type="text" <%if dhcpv4_start and dhcpv4_limit  then %>value="<%=tonumber(dhcpv4_limit) + tonumber(dhcpv4_start) - 1 %>" <%end%> >
+                </div>  
+                <div class="form-group mb-3" id="div_dhcp_leasetime">
+                    <label class="col-lg-4">Leasetime</label>
+                    <select class="form-select" id="leasetime" onchange="check_leasetime_opt()">
+                        <option value="custom" onclick="check_leasetime_opt()" >-- custom --</option>
+                        <option value="3h">3h</option>
+                        <option value="12h" >12h</option>
+                        <option value="1d">1d</option>
+                    </select>
+                    <input type="text" maxLength=16 size=16 style="display: none;" id="other_time" onfocusout="verify_custom_time()">
+                    <input type="text" style="display: none;" name="dhcp_leasetime" id="dhcp_leasetime">
+                    <em class="fas fa-question-circle color-stt-light-blue" style="cursor: pointer;" onclick="display_question_label()"></em>
+                    <div class="form-group offset-md-4">
+                        <label style="display: none;" id="question_label">Expiry time of leased addresses, minimum is 3 hours (<code>3h</code>).</label>
+                    </div>
+                    <!-- <div class="form-group offset-md-4">
+                        <em class="fas fa-question-circle color-stt-light-blue"></em>
+                        Expiry time of leased addresses, minimum is 3 hours (<code>3h</code>).
+                    </div> -->
+                </div> 
+
+                <div class="form-group mb-3" id="div_dnsv4_mode">
+                    <label class="col-lg-4">DNSv4 Mode</label>
+                    <select class="form-select" name="dnsv4_mode" id="dnsv4_mode" onchange="toggle_dnsv4_mode(this)">
+                        <option value="Forwarder">Forwarder</option>
+                        <option value="Proxy" >Proxy</option>
+                        <option value="Static">Static</option>
+                    </select>
+                </div>           
+                
+                <div class="form-group mb-3"  style="display:none" id="div_custom_dns_server">
+                    <label class="col-lg-4">Custom DNS servers</label>
+                    <div class="row col-md-6 offset-md-3">
+                    <%for i = 0, max_dns_server, 1 do%>
+                        <div class="col-md-10" align="center" id="dns_server_cont_<%=i%>" style="<%if i ~= max_dns_server then%> display: none; <%end%>; margin-top: 1%; margin-left: 12px;"> 
+                            <input name="dns_server_<%=i%>" id="dns_server_<%=i%>" type="text">
+                        <%if i == max_dns_server then%>
+                            <em class="fas fa-plus ml-1" style="color: green;" onclick="add_new_dns_server()"></em>
+                        <%else%>
+                            <em class="fas fa-minus ml-1" style="color: red;" onclick="delete_dns_server(<%=i%>)"></em>
+                        <%end%>
+                        </div>
+                    <%end%>
+                    </div>
+                </div> 
+
+
+            </fieldset>
+        </div>
+    </div>
+
+    <div class="widget col-xs-12 col-lg-12 mb-5" id="">
+        <legend><h3>Static Leases</h3></legend>   
+        <div class="cbi-section-node table-responsive">
+            <table class="cbi-section-table" id="table_static_leases">
+                <thead>
+                    <tr class="cbi-section-table-titles">
+                        <th class="cbi-section-table-cell">Hostname</th>
+                        <th class="cbi-section-table-cell">MAC Address</th>
+                        <th class="cbi-section-table-cell">IP Address</th>
+                        <th class="cbi-section-table-cell"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <%if static_leases_tbl then
+                    for k, v in pairs(static_leases_tbl) do%>
+                    <tr class="cbi-section-table-row" id ="row_<%=v[".name"]%>">
+                        <td class="cbi-value-field">
+                            <input type="text" class="cbi-input-text" id="lease_name_<%=v[".name"]%>" name="lease_name_<%=v[".name"]%>"  <%if v["name"] then%> value="<%=v["name"]%>" <%else%>value=""<%end%>>
+                        </td>
+                        <td class="cbi-value-field">
+                            <input type="text" class="cbi-input-text" id="lease_mac_<%=v[".name"]%>" name="lease_mac_<%=v[".name"]%>" <%if v["mac"] then%> value="<%=v["mac"]%>" <%else%>value=""<%end%>>
+                        </td>
+                        <td class="cbi-value-field">
+                            <input type="text" class="cbi-input-text" id="lease_ip_<%=v[".name"]%>" name="lease_ip_<%=v[".name"]%>" <%if v["ip"] then%> value="<%=v["ip"]%>" <%else%>value=""<%end%>>
+                        </td>
+                        <td class="cbi-section-table-cell">
+                            <span id="btn_del_<%=v[".name"]%>" class="form-btn form-btn-remove">
+                                <input class="cbi-button" type="button" value="Delete" onclick="del_lease('<%=v[".name"]%>')" name=""/>
+                            </span>
+
+                            <span id = "del_loading_<%=v[".name"]%>" style="display: none;">
+                                Loading...
+                            </span>
+                        </td>
+                    </tr>
+   
+                    <%end
+                end%>
+
+                </tbody>
+
+            </table>
+
+            <div class="cbi-section-create cbi-tblsection-create">
+                <span class="form-btn form-btn-add" id="btn_add">
+                    <input class="cbi-button" type="button" value="Add" onclick="add_lease()" name="add-lease" id="add-lease" title="Add">
+                </span>
+
+                <span id = "img_loading" style="display: none;">
+                    Loading...
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="widget col-xs-12 col-lg-12 mb-5" id="">
+        <div class="d-flex justify-content-end" style="margin-top: 2%; margin-right: 5%;">
+            <input class="quick-setup-apply" id="appply_btn" type="button" value="Apply" onclick="do_submit()">
+       </div>
+    </div>
+</form>
+
+<%+footer%>

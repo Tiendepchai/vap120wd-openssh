@@ -1,0 +1,4 @@
+/usr/lib/lua/luci/view/dmz/firewall_disable.htm
+/usr/lib/lua/luci/view/dmz/dmz.htm
+/usr/lib/lua/luci/controller/dmz.lua
+/usr/lib/lua/luci/model/cbi/dmz/dmz-overview.lua

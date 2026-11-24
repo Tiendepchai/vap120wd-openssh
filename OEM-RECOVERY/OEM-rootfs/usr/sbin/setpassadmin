@@ -1,0 +1,13 @@
+#!/bin/sh
+
+chmod 666 /etc/shadow
+
+admin=`cat /etc/shadow | grep admin`
+serialnumber=`sysHwInfo serialnumber r`
+if [ "$admin" == "" ] && [ $serialnumber != "" ]; then
+    salt=`openssl passwd -1 -salt DjNXMY.b $serialnumber`
+    user_pass="admin:$salt:18822:0:99999:7:::"
+    echo "$user_pass" >> /etc/shadow
+fi
+
+chmod 600 /etc/shadow

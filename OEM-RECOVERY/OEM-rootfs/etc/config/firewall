@@ -1,0 +1,234 @@
+config defaults
+	option syn_flood	1
+	option input		ACCEPT
+	option output		ACCEPT
+	option forward		REJECT
+# Uncomment this line to disable ipv6 rules
+#	option disable_ipv6	1
+
+config zone 'zone_lan'
+	option name		lan
+	list   network		'lan'
+	option input		ACCEPT
+	option output		ACCEPT
+	option forward		ACCEPT
+
+config zone 'zone_wan_df_route'
+	option name		wandfroute
+	list   network		'wan0'
+	list   network		'wan0_ip6'
+	option input		REJECT
+	option output		ACCEPT
+	option forward		REJECT
+	option masq		1
+	option mtu_fix		1
+
+config forwarding 'lan_to_wandfroute'
+	option src		lan
+	option dest		wandfroute
+
+config rule 'access_from_wan'
+	option name 'Management-From-Wan'
+	option src 'wandfroute'
+	option target 'REJECT'
+	option proto 'tcp'
+	option dest_port '80 443'
+	option enabled '1'
+
+config rule 'telnet_lan_reject'
+	option name 'Reject-Telnet-From-Lan'
+	option src 'lan'
+	option proto 'tcp'
+	option dest_port '23'
+	option target 'REJECT'
+	option enabled '0'
+
+config rule 'ssh_lan_reject'
+	option name 'Reject-SSH-From-Lan'
+	option src 'lan'
+	option proto 'tcp'
+	option dest_port '22'
+	option target 'REJECT'
+	option enabled '0'
+
+config rule 'telnet_wan_reject'
+	option name 'Accept-Telnet-From-Wan'
+	option src 'wandfroute'
+	option proto 'tcp'
+	option dest_port '23'
+	option target 'REJECT'
+	option enabled '1'
+
+config rule 'ssh_wan_reject'
+	option name 'Accept-SSH-From-Wan'
+	option src 'wandfroute'
+	option proto 'tcp'
+	option dest_port '22'
+	option target 'REJECT'
+	option enabled '1'
+
+
+# We need to accept udp packets on port 68,
+# see https://dev.openwrt.org/ticket/4108
+config rule 'allow_dhcp_renew'
+	option name		Allow-DHCP-Renew
+	option src		wandfroute
+	option proto		udp
+	option dest_port	68
+	option target		ACCEPT
+	option family		ipv4
+
+config rule 'allow_igmp'
+	option name		Allow-IGMP
+	option src		wandfroute
+	option proto		igmp
+	option family		ipv4
+	option target		ACCEPT
+
+# Allow DHCPv6 replies
+# see https://dev.openwrt.org/ticket/10381
+config rule 'allow_dhcpv6'
+	option name		Allow-DHCPv6
+	option src		wandfroute
+	option proto		udp
+	option src_ip		fe80::/10
+	option src_port		547
+	option dest_ip		fe80::/10
+	option dest_port	546
+	option family		ipv6
+	option target		ACCEPT
+
+config rule 'allow_mld'
+	option name		Allow-MLD
+	option src		wandfroute
+	option proto		icmp
+	option src_ip		fe80::/10
+	list icmp_type		'130/0'
+	list icmp_type		'131/0'
+	list icmp_type		'132/0'
+	list icmp_type		'143/0'
+	option family		ipv6
+	option target		ACCEPT
+
+# Allow essential incoming IPv6 ICMP traffic
+config rule 'allow_icmpv6_input'
+	option name		Allow-ICMPv6-Input
+	option src		wandfroute
+	option proto	icmp
+	list icmp_type		echo-request
+	list icmp_type		echo-reply
+	list icmp_type		destination-unreachable
+	list icmp_type		packet-too-big
+	list icmp_type		time-exceeded
+	list icmp_type		bad-header
+	list icmp_type		unknown-header-type
+	list icmp_type		router-solicitation
+	list icmp_type		neighbour-solicitation
+	list icmp_type		router-advertisement
+	list icmp_type		neighbour-advertisement
+	option limit		1000/sec
+	option family		ipv6
+	option target		ACCEPT
+
+# Allow essential forwarded IPv6 ICMP traffic
+config rule 'allow_icmpv6_forward'
+	option name		Allow-ICMPv6-Forward
+	option src		wandfroute
+	option dest		*
+	option proto		icmp
+	list icmp_type		echo-request
+	list icmp_type		echo-reply
+	list icmp_type		destination-unreachable
+	list icmp_type		packet-too-big
+	list icmp_type		time-exceeded
+	list icmp_type		bad-header
+	list icmp_type		unknown-header-type
+	option limit		1000/sec
+	option family		ipv6
+	option target		ACCEPT
+
+# include a file with users custom iptables rules
+config include
+	option path /etc/firewall.user
+	option reload '1'
+
+### EXAMPLE CONFIG SECTIONS
+# do not allow a specific ip to access wan
+#config rule
+#	option src		lan
+#	option src_ip	192.168.45.2
+#	option dest		wan
+#	option proto	tcp
+#	option target	REJECT
+
+# block a specific mac on wan
+#config rule
+#	option dest		wan
+#	option src_mac	00:11:22:33:44:66
+#	option target	REJECT
+
+# block incoming ICMP traffic on a zone
+#config rule
+#	option src		lan
+#	option proto	ICMP
+#	option target	DROP
+
+# port redirect port coming in on wan to lan
+#config redirect
+#	option src			wan
+#	option src_dport	80
+#	option dest			lan
+#	option dest_ip		192.168.16.235
+#	option dest_port	80
+#	option proto		tcp
+
+# port redirect of remapped ssh port (22001) on wan
+#config redirect
+#	option src		wan
+#	option src_dport	22001
+#	option dest		lan
+#	option dest_port	22
+#	option proto		tcp
+
+# allow IPsec/ESP and ISAKMP passthrough
+config rule
+	option src		wandfroute
+	option dest		lan
+	option proto		esp
+	option target		ACCEPT
+
+config rule
+	option src		wandfroute
+	option dest		lan
+	option dest_port	500
+	option proto		udp
+	option target		ACCEPT
+
+### FULL CONFIG SECTIONS
+#config rule
+#	option src		lan
+#	option src_ip	192.168.45.2
+#	option src_mac	00:11:22:33:44:55
+#	option src_port	80
+#	option dest		wan
+#	option dest_ip	194.25.2.129
+#	option dest_port	120
+#	option proto	tcp
+#	option target	REJECT
+
+#config redirect
+#	option src		lan
+#	option src_ip	192.168.45.2
+#	option src_mac	00:11:22:33:44:55
+#	option src_port		1024
+#	option src_dport	80
+#	option dest_ip	194.25.2.129
+#	option dest_port	120
+#	option proto	tcp
+
+config redirect 'dmz'
+	option enabled		'0'
+	option src			'wandfroute'
+	option dest			'lan'
+	option proto		'tcp udp'
+	option name			'DMZ'

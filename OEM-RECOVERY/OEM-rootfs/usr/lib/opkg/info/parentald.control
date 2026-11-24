@@ -1,0 +1,8 @@
+Package: parentald
+Version: 1
+Depends: libc, libubox, libuci, libubus, libpcap, libpthread
+Source: package/viettel/parentald
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 18551
+Description:  parental control daemon

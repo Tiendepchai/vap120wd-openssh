@@ -1,0 +1,39 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+
+START=80
+STOP=90
+
+start_service(){
+    dev_role=$( wificonf -f /etc/mapd_cfg.txt get DeviceRole )
+    mesh_enable=$( wificonf -f /etc/mapd_cfg.txt get MapEnable )
+    is_parentald_enabled=$( uci get parental.global.enabled)
+    logger "[parentald]is_parentald_enabled = $is_parentald_enabled"
+    if [[ "$dev_role" == "2" && "$mesh_enable" == "1" ]]; then
+        logger "AP is Agent, parentald will not be started"
+    elif [[ $is_parentald_enabled == "1" ]]; then
+        procd_open_instance
+        procd_set_param command /usr/sbin/parentald
+        procd_set_param respawn
+        procd_close_instance
+    fi 
+}
+
+reload_service(){
+    ubus call parental reload
+}
+
+stop_service(){
+    ubus call parental stop
+    killall crond
+    iface_list="ra0 ra1 ra2 rax0 rax1 rax2 rax3"
+    logger "Parental control is disable, flush wifi acl"
+    for iface in $iface_list
+    do
+        #logger "flush iface $iface"
+        iwpriv $iface set AccessPolicy=0
+        iwpriv $iface set ACLClearAll=1
+    done
+}
+

@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+*.bin
+*.squashfs
+*OEM-firmware*
+backup*.tar.gz
+OPEN_SSH*.tar.gz
+*legacy*.tar.gz
+*ssh-lan-only*.tar.gz

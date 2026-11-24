@@ -1,0 +1,8 @@
+Package: ethsendalarm
+Version: 1.0-230928
+Depends: libc, libubox, libuci, libubus, libiwinfo, libblobmsg-json, libpthread
+Source: package/viettel/ethsendalarm
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 1964
+Description:  Viettel ethsendalarm process

@@ -1,0 +1,19 @@
+<%+header%>
+
+<script src="/luci-static/resources/monCon.js"></script>
+
+<div class="alert-message">
+    <h2><a id="content" name="content"><%:DMZ Disable%></a></h2>
+    <p>Please disable firewall to use DMZ feature</p>
+</div>
+<fieldset class="cbi-section">    
+    <button class="cbi-button" onclick="location.href='<%=luci.dispatcher.build_url("admin", "app", "firewall")%>'" title="Go to Firewall Page">
+        <span><%_Go to Firewall Page%></span>
+    </button>
+    <button class="cbi-button"  onclick="location.href='<%=luci.dispatcher.build_url("admin", "app", "dmz")%>'" title="Reload this page">
+        <em class="fas form-btn-reload"></em>
+        <span><%_Reload%></span>
+    </button>
+</fieldset>
+
+<%+footer%>

@@ -1,0 +1,18 @@
+config system 'system'
+	option hostname	'vthomeap'
+	option zonename	'Asia/Ho Chi Minh'
+	option timezone	'ICT-7'
+	option log_file '/tmp/log/messages'
+	option log_remote '0'
+	option log_size '128'
+	option log_buffer_size '32'
+	option conloglevel '7'
+	option cronloglevel '6'
+
+config timeserver ntp
+	list server	2.vn.pool.ntp.org
+	list server	vn.pool.ntp.org
+	list server	asia.pool.ntp.org
+	option enabled 1
+	option enable_server 0\
+

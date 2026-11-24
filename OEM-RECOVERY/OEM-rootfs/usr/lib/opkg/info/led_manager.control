@@ -1,0 +1,8 @@
+Package: led_manager
+Version: 1
+Depends: libc, libubus, libubox
+Source: package/viettel/led_manager
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 3745
+Description:  Manager all led

@@ -1,0 +1,8 @@
+Package: luci-app-portforwarding
+Version: git-23.297.13754-512d2bbdb-1
+Depends: libc
+Source: package/mtk/ui/luci-mtk/luci-app-portforwarding
+Section: luci
+Architecture: all
+Installed-Size: 10373
+Description:  Portforwarding application

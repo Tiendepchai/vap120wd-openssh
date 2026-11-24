@@ -1,0 +1,634 @@
+
+<%+header%>
+<%
+    require "luci.tools.webadmin"
+    local uci =  require("luci.model.uci").cursor()
+    local max_url = 10
+    local template_entry = {}
+    local num_of_template = 0
+    local parental_tbl = uci:get_all("parental")
+    for k, v in pairs(parental_tbl) do
+        if v[".type"] == "template" then
+            num_of_template = num_of_template + 1
+        end
+    end
+    if tonumber(target_idx) <= num_of_template then
+        template_entry = uci:get_all("parental", "template"..target_idx)
+    end
+%>
+<style>
+    .grid-container
+    {
+        display: grid;
+        grid-template-columns: auto auto auto;
+        gap: 10px;
+        padding: 10px;
+    }
+    .grid-container > div {
+        text-align: center;
+    }
+
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+</style>
+<script src="/luci-static/resources/monCon.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+<script>
+    var target_idx = <%=target_idx%>;
+    console.log(target_idx);
+    var max_url = <%=max_url%>;
+    var num_of_template = <%=num_of_template%>;
+    var hasUrl = new Array(max_url);
+    var templateEntry = new Object();
+    var urlArr = new Array();
+
+    <%
+        if(template_entry["url"]) then
+            for k, v in pairs(template_entry["url"]) do
+    %>
+    urlArr.push("<%=v%>");
+    hasUrl[<%=k%>-1] = 1;   
+    <%
+        end
+            end
+    %>
+    urlArr.sort();
+
+    $("#TemplateForm :input").change(function() {
+        $("#TemplateForm").data("changed",true);
+    });
+
+    function isRulesChanged(){
+        if ($("#TemplateForm").data("changed")) {
+            return true;
+        }
+        return false;
+    }
+
+    /*lambt9*/
+    function toggleListType(){
+        var curFilterType = document.getElementById("template_filtertype").value;
+        if(curFilterType == "Internet"){
+            $("#url_field").show();
+        }
+        else {
+            $("#url_field").hide();
+        }
+    }
+
+
+    function addNewEntry() {
+        var i;
+        i = get_first_empty_entry();
+        console.log("i = " + i);
+        if (i == (max_url - 1)) {
+            $('#url10').hide();
+        }
+        if (i < 0) {
+            alert("Rules table is full.");
+            return;
+        }
+        $('#addr'+i).val($('#addr10').val());
+
+        $('#addr10').val("");
+        $('#url'+i).show();
+        hasUrl[i] = 1;
+    }
+
+    function doDeleteEntry(i) {
+        $('#url10').show();
+        $('#url'+i).hide();
+        $('#addr'+i).val("");
+        hasUrl[i] = 0;
+        rearrange_rules();
+    }       
+    
+    function trimUrl(url){
+        var ret;
+        //parser protocol fisrt
+        if(url.search("https://") > -1){
+            ret = url.slice(8, url.length)
+        }
+        else if(url.search("http://") > -1){
+            ret = url.slice(7, url.length)
+        }
+        else{
+            ret = url;
+        }
+
+        //parser www
+        if(url.search("www.") > -1){
+            ret = ret.slice(4, ret.length)
+        }
+        return ret;
+    }
+
+    function checkDuplicateUrl(url, ref){
+        var url1 = trimUrl(url);
+        var url2 = trimUrl(ref);
+        if(url1 == url2)
+            return true;
+        else
+            return false;
+    }
+
+    function allLetter(inputtxt) 
+    { 
+        // return true;
+        var letters = /^[A-Za-z0-9]+$/;
+        if(inputtxt.match(letters)) 
+        { 
+            return true;
+        } 
+        else 
+        {
+            return false; 
+        } 
+    }  
+
+    function rearrange_rules() {
+        var i,j;
+        for (i = 0; i < max_url; i++) {
+            $('#url'+i).val($('#url'+i).val().trim());
+            if (hasUrl[i] == 1) {
+                $('#url'+i).show();
+            }
+            else {
+                for (j = i+1; j<max_url;j++) {
+                    if (hasUrl[j] == 1) {
+                        $("#addr"+i).val($("#addr"+j).val());
+                        hasUrl[i] = 1;
+                        hasUrl[j] = 0;
+                        $('#url'+i).show();
+                        $('#url'+j).hide();
+                        $("#addr"+j).val("");
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    function hasProtocol(str) {
+        var pattern = new RegExp('^(https?:\\/\\/)?');
+        return !!pattern.test(str);
+    }
+    function validURL(str) {
+        var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
+        '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+        return !!pattern.test(str);
+    }
+
+    function validate_time(time) {
+        var arr_time;
+        var hour, min;
+        if (time.length == 0) {
+            alert("Time is empty!");
+            return -1;
+        }
+        arr_time = time.split(":",2);
+        if (isNaN(arr_time[0]) || isNaN(arr_time[1])) {
+            alert("Invalid time! Time must be in format hh:mm, from 00:00 to 23:59.");
+            return -1;
+        }
+        hour = parseInt(arr_time[0]);
+        min = parseInt(arr_time[1]);
+        if (isNaN(hour) || isNaN(min)) {
+            alert("Invalid time! Time must be in format hh:mm, from 00:00 to 23:59.");
+            return -1;
+        }
+        if ((hour < 0 ) || (hour > 23) || (min > 59) || (min < 0)) {
+            alert("Invalid time! Time must be in format hh:mm, from 00:00 to 23:59.");
+            return -1;
+        }
+    }
+
+    function compare_time(stime, etime){
+        var stime_n = stime.match(/\d+/g).map(Number);
+        var etime_n = etime.match(/\d+/g).map(Number);
+        //console.log(stime_n[0] + ":" + stime_n[1] + ", " + etime_n[0] + ":" + etime_n[1]);
+        if(etime_n[0] < stime_n[0]){
+            alert("Start time must be ealier than End time"); 
+            return false;
+        }
+        else if(etime_n[0] > stime_n[0])
+            return true;
+            
+        if(etime_n[1] <= stime_n[1]){
+            alert("Start time must be ealier than End time"); 
+            return false;
+        }   
+        return true;     
+    }
+
+    function doSubmit(){
+        var str;
+        $('#template_name').val($('#template_name').val().trim());
+        if ($('#template_name').val().length == 0) {
+            alert("Template Name must not be empty");
+            return;
+        }
+
+        if (!allLetter($('#template_name').val())) {
+            alert("Invalid Template name. Template name must consist of digits (from 0 to 9) or letters in the English alphabet.");
+            return;
+        }
+
+        if (validate_time($('#template_time').val()) == -1) {
+            $('#template_time').focus();
+            return;
+        }
+        if (validate_time($('#template_etime').val()) == -1) {
+            $('#template_etime').focus();
+            return;
+        }
+                
+        if( compare_time( $('#template_time').val(), $('#template_etime').val()) == false){
+            $('#template_time').focus();
+            return;
+        }
+        var submitData = {};
+        submitData.name = $("#template_name").val();
+        submitData.FilterType = $("#template_filtertype").val();
+        submitData.FilterMode = "Black";
+        submitData.start_time = $("#template_time").val();
+        submitData.stop_time = $("#template_etime").val();
+        submitData.weekdays = "";
+        console.log("Filter_type submit: "+ submitData.FilterType);
+        if(document.TemplateForm.cbSun.checked)              
+            submitData.weekdays += 'Sun,';
+
+        if(document.TemplateForm.cbMon. checked)              
+            submitData.weekdays += 'Mon,';
+
+        if(document.TemplateForm.cbTue.checked)              
+            submitData.weekdays += 'Tue,';
+
+        if(document.TemplateForm.cbWed.checked)              
+            submitData.weekdays += 'Wed,';
+
+        if(document.TemplateForm.cbThu.checked)              
+            submitData.weekdays += 'Thu,';
+
+        if(document.TemplateForm.cbFri.checked)              
+            submitData.weekdays += 'Fri,';
+
+        if(document.TemplateForm.cbSat.checked)              
+            submitData.weekdays += 'Sat,';
+        
+
+        submitData.weekdays = submitData.weekdays.slice(0, -1);
+
+        if (submitData.weekdays.length == 0) {
+            alert("Invalid Repeat. You must select at least one day.");
+            return;
+        } 
+        if(!document.TemplateForm.cbAllUrl.checked) {
+            $('#addr10').val($('#addr10').val().trim());
+            if(get_first_empty_entry() == 0 && $("#addr10").val().length == 0){
+                alert("Please enter at least one URL!");
+                return;
+            }
+
+            for (i = 0; i< max_url;i++) {
+                $('#addr'+i).val($('#addr'+i).val().trim());
+                if ($('#addr'+i).val().length == 0) {
+                    continue;
+                }
+        
+                for (var j=0;j<i;j++) {
+                    if(checkDuplicateUrl($('#addr'+ i).val(), $('#addr'+ j).val())){
+                        console.log(i + " dup " + j);
+                        alert("URL addresses must not duplicate");
+                        $('#addr'+ i).focus();
+                        return;
+                    }
+                }
+
+                str = $('#addr'+ i).val().toLowerCase();
+                if (!validURL(str)) {
+                    alert("Invalid address. Please enter a valid URL!");
+                    $('#addr'+ i).focus();
+                    return;
+                }
+            }   
+            rearrange_rules();
+            $('#addr10').val($('#addr10').val().trim());
+            if ($("#addr10").val().length != 0) {
+            for (var j=0;j<max_url;j++) {
+                if(checkDuplicateUrl($('#addr10').val(), $('#addr'+ j).val())){
+                    console.log("10 dup " + j);
+                    alert("URL addresses must not duplicate");
+                    $('#addr10').focus();
+                    return;
+                }
+            }
+            str = $('#addr10').val().toLowerCase();
+            if (!validURL(str)) {
+                alert("Invalid address. Please enter a valid URL!");
+                $('#addr10').focus();
+                return;
+            }
+
+            let i = get_first_empty_entry();
+            $("#addr" + i).val($("#addr10").val());
+            hasUrl[i] = 1;
+        }
+
+            for(i = 0; i < max_url; i++){
+                if(hasUrl[i] && $("#addr" + i).val().length > 0){
+                    submitData["url" + i] = $("#addr"+ i).val();
+                }
+            }
+
+        }
+
+        if( confirm("The changing of this configuration may be related to other security features, make sure that you are clearly checked and understand before your configuration!") == false)
+            return;
+
+        $.ajax({
+            url: '<%=luci.dispatcher.build_url("admin", "app", "parental", "apply_template")%>/' + target_idx,
+            type: 'POST',  
+            data: submitData,
+            beforeSend: function() {
+                $("#Applying_form").show();
+                $("#TemplateForm").hide();
+            },
+            complete: function() {   
+                window.location.href = "<%=luci.dispatcher.build_url("admin", "app", "parental")%>";  
+                },
+        });
+    }
+
+    function doBack(){
+        if (isRulesChanged()) {
+            alert('Do you want to apply your changes?');
+            return;
+        }
+        window.location.href = "<%=luci.dispatcher.build_url("admin", "app", "parental")%>";    
+    }
+
+    function get_first_empty_entry() {          
+        var i;
+        for (i=0; i < max_url; i++) {
+            if (hasUrl[i] != 1) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function doAdd(){
+        document.getElementById("cbAllUrl").checked = true;
+        $('#urlTbl').hide(); 
+    }
+
+
+    function doEdit(){
+        templateEntry.name = "<%=template_entry["name"]%>";
+        templateEntry.index = "<%=template_entry["index"]%>";
+        templateEntry.filter_type = "<%=template_entry["FilterType"]%>";
+        templateEntry.start_time = "<%=template_entry["start_time"]%>";
+        templateEntry.stop_time = "<%=template_entry["stop_time"]%>";
+        templateEntry.weekdays = "<%=template_entry["weekdays"]%>";
+        console.log(templateEntry);
+
+        $("#template_name").val(templateEntry.name);
+        $("#template_filtertype").val(templateEntry.filter_type);
+        if(templateEntry.filter_type == "Internet"){
+            document.getElementById("filter_internet").selected = true;
+            $("#url_field").show();
+        }
+        else{
+            document.getElementById("filter_wifi").selected = true;
+            $("#url_field").hide();
+        }
+        $("#template_time").val(templateEntry.start_time);
+        $("#template_etime").val(templateEntry.stop_time);
+
+        if(templateEntry.weekdays.includes("Sun") == true)
+            document.getElementById("cbSun").checked = true;
+        else
+            document.getElementById("cbSun").checked = false;
+
+        if(templateEntry.weekdays.includes("Mon") == true)
+            document.getElementById("cbMon").checked = true;
+        else
+            document.getElementById("cbMon").checked = false;
+
+        if(templateEntry.weekdays.includes("Tue") == true)
+            document.getElementById("cbTue").checked = true;
+        else
+            document.getElementById("cbTue").checked = false;
+
+        if(templateEntry.weekdays.includes("Wed") == true)
+            document.getElementById("cbWed").checked = true;
+        else
+            document.getElementById("cbWed").checked = false;
+
+        if(templateEntry.weekdays.includes("Thu") == true)
+            document.getElementById("cbThu").checked = true;
+        else
+            document.getElementById("cbThu").checked = false;
+
+        if(templateEntry.weekdays.includes("Fri") == true)
+            document.getElementById("cbFri").checked = true;
+        else
+            document.getElementById("cbFri").checked = false;
+
+        if(templateEntry.weekdays.includes("Sat") == true)
+            document.getElementById("cbSat").checked = true;
+        else
+            document.getElementById("cbSat").checked = false;
+        
+        if(get_first_empty_entry() == 0){
+            document.getElementById("cbAllUrl").checked = true;
+            $('#urlTbl').hide(); 
+        }
+        else{
+            for(i=0; i < max_url; i++){
+                if(hasUrl[i] == 1){
+                    $("#addr" + i).val(urlArr[i]);
+                    $("#url" + i).show();
+                }
+            }
+        }
+        console.log("first empty: " + get_first_empty_entry());
+        if(get_first_empty_entry() == -1)
+                $("#url10").hide();
+    }
+
+    function onloadFunction(){
+        for(var  i = 0; i<= max_url; i++)
+            $("#addr" + i).val("");
+        if(target_idx <= num_of_template){
+            doEdit();
+        }
+        else{
+            console.log("Add new template");
+            doAdd();
+        }
+    }
+
+    function UrlSwitch(){
+        if(document.TemplateForm.cbAllUrl.checked)
+        {
+            $('#urlTbl').hide();                
+        }
+        else
+        {
+            $('#urlTbl').show();                      
+        }
+    }
+</script>
+<body  class="container" onload="onloadFunction();">
+    <form  id="Applying_form" style="display:none">
+        <div>
+            <h2><a>Applying Settings</a></h2>
+        </div>
+        <div class="alert-message" id="BusyMsg">
+            <img src="<%=resource%>/icons/loading.gif" alt="" style="vertical-align:middle" />
+            <big><strong>Please wait while the settings are being applied.</strong></big>
+        </div>
+    </form>
+
+    <form class="form-inline" name="TemplateForm" id="TemplateForm">
+        <div class="widget col-xs-12 col-lg-12 mb-5">
+            <legend><h2>Template</h2></legend>
+            <div class="d-flex flex-wrap widget-body">
+                <fieldset class="col-lg-12 mb-3" id="setting_field">
+                    <div class="form-group">
+                        <legend class="col-xs-12 col-sm-4 control-label"><h5>Template Name</h5></legend>
+                        <INPUT type="text" NAME="template_name" id="template_name" SIZE="20" MAXLENGTH="20">
+                    </div><br>
+                    <div class="form-group">
+                        <legend class="col-xs-12 col-sm-4 control-label"><h5>Filter type</h5></legend> 
+                        <SELECT class="form-select" name="template_filtertype" id="template_filtertype" onchange="toggleListType()">
+                            <OPTION id="filter_internet" value="Internet">INTERNET</OPTION>
+                            <OPTION id="filter_wifi" value="WiFi">WIFI</OPTION>
+                        </SELECT>                       
+                    </div><br>
+                    <div class="form-group">
+                        <legend class="col-xs-12 col-sm-4 control-label"><h5>Start time</h5></legend>
+                        <INPUT type="text"  id="template_time" NAME="template_time" SIZE="5" MAXLENGTH="5"
+                        VALUE="00:00">
+                    </div><br>
+                    <div class="form-group">
+                        <legend class="col-xs-12 col-sm-4 control-label"><h5>End time</h5></legend>
+                        <INPUT type="text"  id="template_etime" NAME="template_etime" SIZE="5" MAXLENGTH="5" 
+                        VALUE="23:59">
+                    </div><br>
+                    <div class="form-group">
+                        <legend class="col-xs-12 col-sm-4 control-label"><h5>Repeat</h5></legend>
+                        <input type="hidden" name="template_repeat" id="template_repeat"></input>
+                        <div>
+                            <table class="table table-bordered" style="border:1px solid black; width:100%">
+                                <thead>
+                                <tr class="thead-light" style="text-align: center;">
+                                    <th>Sun</th>
+                                    <th>Mon</th>
+                                    <th>Tue</th>
+                                    <th>Wed</th>
+                                    <th>Thu</th>
+                                    <th>Fri</th>
+                                    <th>Sat</th>
+                                </tr>
+                                </thead>
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="checkbox_repeat" id="cbSun"></input>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" name="checkbox_repeat" id="cbMon"></input>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" name="checkbox_repeat" id="cbTue"></input>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" name="checkbox_repeat" id="cbWed"></input>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" name="checkbox_repeat" id="cbThu"></input>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" name="checkbox_repeat" id="cbFri"></input>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" name="checkbox_repeat" id="cbSat"></input>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                
+                        <fieldset class="col-lg-12 mb-3" id="url_field">
+                            <legend><h5>Filtered addresses</h5></legend>
+                            <div class="form-group mb-2">
+                                <label class="col-lg-3">Block all URLs</label>
+                                <input type="checkbox" name="checkbox_url" id="cbAllUrl" onChange="UrlSwitch();"></input>
+
+                            </div>                                                                                              
+                            <!-- URL table -->
+                            <div class="table-responsive col-xs-12 col-sm-10"  id ="urlTbl" style="float: none; margin: 0 auto; text-align: center;">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr class="thead-light">
+                                            <th style="text-align: center;" >URL</th>
+                                            <th style="text-align: center;" >Action</th>
+                                        </tr>   
+                                    </thead>
+                                    <tbody>
+
+                                        <%for i = 0, max_url, 1 do%>
+
+                                        <tr id="url<%=tostring(i)%>" style="<%if i ~= max_url then%> display: none; <%end%> ">
+                                            <td style="text-align: center;">
+                                                <INPUT type="text" name="addr<%=i%>" id="addr<%=i%>">
+                                            </td>
+                                            <%if i ~= max_url then%>
+                                            <td style="text-align: center; "><i class='fa fa-minus' style="font-size:18px; color: red" onmouseover='this.style.cursor="hand"' onclick='doDeleteEntry(<%=i%>)'></i></td>
+                                            <%else%>
+                                            <td style="text-align: center;" ><i class="fa fa-plus" style="font-size:18px; color:green;" onclick="addNewEntry()"></i></td>
+                                            <%end%>
+                                        </tr>
+                                        <%end%>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </fieldset>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="grid-container ">
+                <div>
+                    <button id="btnBack" type="button" style="width: 70px;" class="quick-setup-apply" onclick="doBack()">Back</button> 
+                </div>
+                <div></div>
+                <div>
+                    <button id="btnOK" type="button" style="width: 70px;" class="quick-setup-apply" onclick="doSubmit()">Apply</button>
+                </div>
+            </div> 
+        </div>
+
+
+    </form>
+
+</body>

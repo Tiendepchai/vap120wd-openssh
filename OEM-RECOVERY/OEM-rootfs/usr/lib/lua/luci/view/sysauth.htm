@@ -1,0 +1,81 @@
+<%#
+ Copyright 2008 Steven Barth <steven@midlink.org>
+ Copyright 2008-2012 Jo-Philipp Wich <jow@openwrt.org>
+ Copyright 2021 Hoang Tran <hoangtu1@viettel.com.vn>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%+header%>
+		<div class="row  justify-content-center">
+			<div id="login-box" class="col-xs-12  col-sm-10 col-md-8 col-lg-5">
+				<div id="upper-card" class="card justify-content-center ">
+					<div class="row justify-content-center"><img src="<%=media%>/img/logo_login.png"></div>
+				</div>
+				<div id="lower-card" class="card">
+					<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+						<input type="hidden" name="StatusActionFlag" value="-1">
+						<fieldset class="row justify-content-center">
+							<div class="input-group">
+								<div class="input-group-prepend">
+									<span class="input-group-text border-right-0">
+										<i class="fa fa-user"></i>
+									</span>
+								</div>
+								<input type="text" name="luci_username" id="luci_username" value="" class="form-control border-left-0 border-md" maxlength="30" placeholder="<%:Username%>" autocomplete="off">
+							</div>
+							<div class="input-group">
+								<div class="input-group-prepend border-right-0">
+									<span class="input-group-text">
+										<i class="fa fa-lock"></i>
+									</span>
+								</div>
+								<input type="password" name="luci_password" id="luci_password" value="" class="form-control border-left-0 border-md" maxlength="30" placeholder="<%:Password%>" autocomplete="off">
+							</div>
+							<div class="input-group mt-0 mb-0">
+								<label id="errmsg" ><%- if fuser then %><%:Invalid username and/or password! Please try again.%><% end -%></label>
+							</div>
+						</fieldset>
+						<div class="input-group mt-0 mb-0">
+							<input type="submit" value="<%:Login%>" class="btn btn-login" />
+						</div>
+						<div id="forgetpw">
+							<!-- <a href="/cgi-bin/login_forget_password.asp" id="forgetpw_button">Forget Password?</a> -->
+							<a href="/cgi-bin/luci/forgetpassword" id="forgetpw_button">Forget Password?</a>
+						</div>
+					</form>
+				</div>
+			</div>
+<script type="text/javascript">//<![CDATA[
+	var input = document.getElementsByName('luci_username')[0];
+	if (input)
+		input.focus();
+//]]></script>
+
+<%
+local uci  = require "luci.model.uci".cursor()
+local fs  = require "nixio.fs"
+local https_key = uci:get("uhttpd", "main", "key")
+local https_port = uci:get("uhttpd", "main", "listen_https")
+if type(https_port) == "table" then
+	https_port = https_port[1]
+end
+
+if https_port and fs.access(https_key) then
+	https_port = https_port:match("(%d+)$")
+%>
+
+<script type="text/javascript">//<![CDATA[
+	if (document.location.protocol != 'https:') {
+		var url = 'https://' + window.location.hostname + ':' + '<%=https_port%>' + window.location.pathname;
+		var img=new Image;
+		img.onload=function(){window.location = url};
+		img.src='https://' + window.location.hostname + ':' + '<%=https_port%>' + '<%=resource%>/cbi/up.gif?' + Math.random();;
+		setTimeout(function(){
+			img.src=''
+		}, 5000);
+	}
+//]]></script>
+
+<% end %>
+
+<%+footer%>

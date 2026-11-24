@@ -1,0 +1,9 @@
+Package: dns_parser
+Version: 0001
+Depends: libc, libpcap
+Source: package/viettel/DnsParser
+License: GPL-2.0+
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 4742
+Description:  Daemon which parse DNS to get IP to support URL filters feature

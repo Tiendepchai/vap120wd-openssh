@@ -1,0 +1,795 @@
+<%+header%>
+<% 
+    uci = require("luci.model.uci").cursor()
+    wan_dfroute = uci:get("network", "globals", "wan_df_route")
+%>
+<style>
+    input[readonly]
+    {
+        background-color: darkgrey;
+    }
+    .warn-text
+    {
+        margin-left: 2%;
+        color: black;
+        font-size: 14px;
+    }
+    @media (min-width: 576px) 
+    {
+        .form-inline label
+        {
+            justify-content: left;
+        }
+    }
+    input:disabled
+    {
+        font-size: 14px;
+        background-color: darkgrey;
+    }
+    .input-group>.input-password
+    {
+        width: 1%;
+        flex: 1 1 auto;
+    }
+    .input-password
+    {
+        border-right: solid 0px !important;
+        border-radius: 3px 0 0 3px;
+        padding: .375rem .75rem;
+    }
+    .show-password-btn 
+    {
+        border: #adb5bd solid 1px !important;
+        border-left: solid 0px !important;
+        border-radius: 0 3px 3px 0;
+        background-color: #fff;
+        width: 30px;
+        padding-top: 7px;
+        padding-left: 7px;
+    }
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        width: 120px;
+        height: 32px;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 14px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+    .fa-eye:hover
+    {
+        cursor: pointer;
+        color: #ec1b2e;
+    }
+    .fa-eye-slash:hover
+    {
+        cursor: pointer;
+        color: #ec1b2e;
+    }
+
+
+    h5 {
+        font-size: 16px;
+    }
+
+    label {
+        font-size: 14px;
+        margin-left: 2%;
+    } 
+
+    select {
+        font-size: 14px;
+    }
+
+</style>
+<script src="/luci-static/resources/monCon.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+<script type="text/javascript">
+    var used_vid_list = [];
+    var wifi_24_state = true;
+    var wifi_5_state = true;
+    var is_wifi24_open = false;
+    var is_wifi5_open = false;
+    var role = "2";
+    var mesh_enable = "1";
+
+// function definition
+function visit_dfroute_wan()
+{
+    if (mesh_enable == "1" && role == "2")
+        alert("Current device role is agent, you can't config network in WAN configuration page");
+    else
+        location.href = '<%=luci.dispatcher.build_url("admin", "network", "wan_cfg", wan_dfroute)%>';
+}
+function load_wan_prot_view()
+{
+    var wan_prot = $("[id='protocol']").val();
+    if (wan_prot == "dhcp")
+    {
+        $("#pppoe_field").hide();
+        $("#warn_static_wan").hide();
+    }
+    else if (wan_prot == "pppoe")
+    {
+        $("#pppoe_field").show();
+        $("#warn_static_wan").hide();
+    }
+    else if (wan_prot == "static")
+    {
+        $("#pppoe_field").hide();
+        $("#warn_static_wan").show();
+    }
+}
+
+function toggle_bs()
+{
+    if (!wifi_24_state || !wifi_5_state)
+    {
+        alert("Can not enable bandsteering if any SSID1 is disabled");
+        return false;
+    }    
+    load_bandstr_view();
+    return true;
+}
+
+function load_bandstr_view()
+{
+    var bandstr_status = $("[id='bstr_enable']").is(":checked");
+    if (bandstr_status == true)
+    {
+        
+        $("#wifi24_field").show();
+        $("#wifi5_field").hide();
+        $("#bandstr_warn").show();
+        $("[id='wifi24_legend']").html("Wifi");
+
+        $("#wifi24_field").attr('class', 'col-lg-12');
+        $("#ssid_wifi24").attr('class', 'col-lg-3');
+        $("#label_ssid_wifi24").attr('class', 'col-lg-4');
+        $("#div_pwd_wifi24").attr('class', 'input-group col-lg-3 px-0');
+    }
+    else
+    {
+        let ssid24 = $("[id='ssid_wifi24']").val();
+        let ssid5 = $("[id='ssid_wifi5']").val();
+
+        if (ssid24 == ssid5)
+        {
+            $("[id='ssid_wifi5']").val(ssid5 + "_5G");
+        }
+        $("#wifi24_field").show();
+        $("#wifi5_field").show();  
+        $("#bandstr_warn").hide();  
+        $("[id='wifi24_legend']").html("Wifi 2.4GHz");
+
+        $("#wifi24_field").attr('class', 'col-lg-6');
+        $("#ssid_wifi24").attr('class', 'col-lg-6');
+        $("#label_ssid_wifi24").attr('class', 'col-lg-4');
+        $("#label_pwd_wifi24").attr('class', 'col-lg-4');
+        $("#div_pwd_wifi24").attr('class', 'input-group col-lg-6 px-0');
+
+    }
+    // $("[id='wifi24_field']").prop("disabled", !wifi_24_state);
+    // $("[id='wifi5_field']").prop("disabled", !wifi_5_state);
+    $("[id='ssid_wifi24']").prop("readonly", !wifi_24_state);
+    $("[id='pwd_wifi24']").prop("readonly", !wifi_24_state);
+    $("[id='ssid_wifi5']").prop("readonly", !wifi_5_state);
+    $("[id='pwd_wifi5']").prop("readonly", !wifi_5_state);
+    if (!wifi_24_state || !wifi_5_state)
+    {
+        $("[id='bstr_enable']").prop("disabled", true);
+        $("[id='bandstr_warn']").html("Can not enable bandsteering if any SSID1 is disabled");
+        $("#bandstr_warn").show();
+    }  
+    if (is_wifi24_open)
+    {
+        $("#pwd_wifi24_div").hide()
+        $("#warn_wifi24_div").show();
+    }
+    if (is_wifi5_open)
+    {
+        $("#pwd_wifi5_div").hide()
+        $("#warn_wifi5_div").show();
+    }
+
+}
+
+function load_dev_role_view()
+{
+    var cur_dev_role = $("[id='role_sel']").val();
+    if (cur_dev_role == "1")
+    {
+        $("#bstr_field").show();
+        $("#wan_cfg_div").show();
+        load_wan_prot_view();
+        load_bandstr_view();
+    }
+    else if (cur_dev_role == "2")
+    {
+        $("#wifi24_field").hide();
+        $("#wifi5_field").hide();
+        $("#bstr_field").hide();
+        $("#wan_cfg_div").hide();       
+    }
+}
+
+function toggle_mesh()
+{
+    var cur_mesh_status = $("[id='mesh_enable']").is(":checked");
+    if (true == cur_mesh_status)
+    {
+        $("#device_role_div").show();
+        load_dev_role_view();
+    }
+    else
+    {
+        $("#device_role_div").hide();
+        $("#wifi24_field").show();
+        $("#wifi5_field").show();
+        $("#bstr_field").show();
+        $("#wan_cfg_div").show();
+        load_bandstr_view();
+        load_wan_prot_view();
+    }
+}
+
+function load_view()
+{
+    toggle_mesh();
+}
+
+function toggle_password(e, eye_ele)
+{
+    var cur_type = $("[id='" + e + "']").attr("type");
+
+    if (cur_type == "password")
+    {
+        $("[id='" + e + "']").attr("type", "text");
+        $(eye_ele).removeClass("fa-eye-slash");
+        $(eye_ele).addClass("fa-eye");
+    }
+    else if (cur_type == "text")
+    {
+        $("[id='" + e + "']").attr("type", "password");
+        $(eye_ele).removeClass("fa-eye");
+        $(eye_ele).addClass("fa-eye-slash");
+    }
+}
+
+function validate_ssid(ssid)
+{
+    const special_char_ssid = [
+        "\\","'","`","/","\"",
+        "à","á","ả","ã","ạ",
+        "ă","ằ","ắ","ẳ","ẵ","ặ",
+        "â","ầ","ấ","ẩ","ẫ","ậ",
+        "è","é","ẽ","ẻ","ẹ",
+        "ê","ề","ế","ễ","ể","ệ",
+        "ù","ú","ủ","ũ","ụ",
+        "ư","ừ","ứ","ử","ữ","ự",
+        "ò","ó","ỏ","õ","ọ",
+        "ô","ồ","ố","ổ","ỗ","ộ",
+        "ì","í","ĩ","ỉ","ị",
+        "ỳ","ý","ỷ","ỹ","ỵ"
+    ];
+    var fullSpaceInSSID = true;
+    if (ssid.length == 0 || ssid.length > 32)
+    {
+        alert("Invalid SSID!\nPlease enter SSID with characters ranging from 1 character to 32 characters.");
+        return false;
+    }
+    for (var i = 0; i < special_char_ssid.length; i++)
+    {
+        if (ssid.includes(special_char_ssid[i])) 
+        {
+            alert("Invalid SSID!\n Please enter SSID without including \" " + special_char_ssid[i] + " \" character");
+            return false;
+        }
+    }
+    for (let i = 0; i < ssid.length; i++) {
+        console.log(ssid[i]);
+        if (ssid[i] != " ") {
+            fullSpaceInSSID=false;
+            break;
+        }
+    }
+    if (fullSpaceInSSID == true) {
+        alert("Invalid SSID!\n Do not allow SSID with all space character - Please re-enter SSID\n");
+        return false;
+    }
+    return true;
+}
+
+function checkHex(str) 
+{
+    var len = str.length;
+    for (var i = 0; i < str.length; i++) 
+    {
+        if ((str.charAt(i) >= '0' && str.charAt(i) <= '9') ||
+            (str.charAt(i) >= 'a' && str.charAt(i) <= 'f') ||
+            (str.charAt(i) >= 'A' && str.charAt(i) <= 'F')) 
+        {
+            continue;
+        } 
+        else
+            return false;
+    }
+    return true;
+}
+
+function validate_password(pwd) 
+{
+    const special_char_pwd = [
+        "\\", "'", "`", "/", "\"", " ",
+        "à", "á", "ả", "ã", "ạ",
+        "ă", "ằ", "ắ", "ẳ", "ẵ", "ặ",
+        "â", "ầ", "ấ", "ẩ", "ẫ", "ậ",
+        "è", "é", "ẽ", "ẻ", "ẹ",
+        "ê", "ề", "ế", "ễ", "ể", "ệ",
+        "ù", "ú", "ủ", "ũ", "ụ",
+        "ư", "ừ", "ứ", "ử", "ữ", "ự",
+        "ò", "ó", "ỏ", "õ", "ọ",
+        "ô", "ồ", "ố", "ổ", "ỗ", "ộ",
+        "ì", "í", "ĩ", "ỉ", "ị",
+        "ỳ", "ý", "ỷ", "ỹ", "ỵ"
+    ];
+    if (pwd.length < 8)
+    {
+        alert('Please input at least 8 characters for security key');
+        return false;
+    }
+    if (checkHex(pwd) == true) 
+    {
+        if (pwd.length > 64) 
+        {
+            alert('Please input 8~63 ASCII or 64 Hexadecimal characters for security key');
+            return false;
+        }
+    }
+    else 
+    {
+        if (pwd.length > 63) 
+        {
+            alert('Please input 8~63 ASCII or 64 Hexadecimal characters for security key');
+            return false;
+        }
+    }
+
+    for (var i = 0; i < special_char_pwd.length; i++) 
+    {
+        if (pwd.includes(special_char_pwd[i])) 
+        {
+            alert("Invalid Password!\n Please enter Password without including \" " + special_char_pwd[i] + " \" character");
+            return false;
+        }
+    }
+    return true;
+}
+
+function validate_wifi()
+{
+    var bandstr_status = $("[id='bstr_enable']").is(":checked");
+    var ssid_24 = $("[id='ssid_wifi24']").val();
+    var pwd_24 = $("[id='pwd_wifi24']").val();
+    var ssid_5 = $("[id='ssid_wifi5']").val();
+    var pwd_5 = $("[id='pwd_wifi5']").val();
+    if (validate_ssid(ssid_24) == false)
+    {
+        $("[id='ssid_wifi24']").focus();
+        return false;
+    }
+    if (validate_password(pwd_24) == false)
+    {
+        $("[id='pwd_wifi24']").focus();
+        return false;
+    }
+    if (bandstr_status == false)
+    {
+        if (validate_ssid(ssid_5) == false)
+        {
+            $("[id='ssid_wifi5']").focus();
+            return false;
+        }
+        if (validate_password(pwd_5) == false)
+        {
+            $("[id='pwd_wifi5']").focus();
+            return false;
+        }
+        if (ssid_24 == ssid_5)
+        {
+            alert("Bandsteering is disabled.\nWifi 2.4GHz's SSID and Wifi 5GHz's SSID must be different");
+            return false;
+        }
+    }
+    else if (bandstr_status == true)
+    {
+
+    }
+    return true;
+}
+
+function validate_wan()
+{
+    var wan_prot = $("[id='protocol']").val();
+    var vid;
+    if (wan_prot == "static")
+    {
+        if (!confirm("WAN Static config will not be applied in this page!\nDo you want to continue apply config?")) 
+        {
+            return false;
+        }
+    }
+    if (wan_prot == "pppoe")
+    {
+        vid = $("[id='pppoe_vlanid']").val();
+    }
+    else if (wan_prot == "dhcp")
+    {
+        vid = "0";
+    }
+    if (used_vid_list.includes(vid))
+    {
+        alert("Another WAN Interface has the same VID as this one.\nPlease choose other VID or select WAN setting for more details");
+        return false;
+    }
+    return true;
+}
+
+function validate_form()
+{
+    var ret = true;
+    ret = validate_wifi();
+    if (ret == true)
+        ret = validate_wan();
+    return ret;
+}
+
+function handle_get_data(x, is_set_full)
+{
+    var info;
+    var mesh;
+    var wifi;
+    var wan;
+    info = JSON.parse(x.response);
+    if (is_set_full)
+    {
+        if ("mesh" in info)
+        {
+            if ("mesh_enable" in info["mesh"])
+            {
+                if (info["mesh"]["mesh_enable"] == "1")
+                {
+                    $("[id='mesh_enable']").prop("checked", true);
+                }
+                else
+                {
+                    $("[id='mesh_enable']").prop("checked", false);
+                }
+                mesh_enable = info["mesh"]["mesh_enable"];
+            }
+            if ("device_role" in info["mesh"])
+            {
+                $("[id='role_sel']").val(info["mesh"]["device_role"]);
+                role = info["mesh"]["device_role"];
+            }
+        }
+        else return false;
+    
+        if ("wifi" in info)
+        {
+            if ("wifi_24" in info["wifi"])
+            {
+                $("[id='ssid_wifi24']").val(info["wifi"]["wifi_24"]["ssid_24"]);
+                $("[id='pwd_wifi24']").val(info["wifi"]["wifi_24"]["pwd_24"]);
+                if (info["wifi"]["wifi_24"]["state"] == "down")
+                    wifi_24_state = false;
+                if (info["wifi"]["wifi_24"]["auth_mode"] == "OPEN")
+                    is_wifi24_open = true;
+            }
+            if ("wifi_5" in info["wifi"])
+            {
+                $("[id='ssid_wifi5']").val(info["wifi"]["wifi_5"]["ssid_5"]);
+                $("[id='pwd_wifi5']").val(info["wifi"]["wifi_5"]["pwd_5"]);
+                if (info["wifi"]["wifi_5"]["state"] == "down")
+                    wifi_5_state = false;
+                if (info["wifi"]["wifi_5"]["auth_mode"] == "OPEN")
+                    is_wifi5_open = true;
+            }
+            // check bandsteering
+            if ("bs_enable" in info["wifi"])
+            {
+                if (info["wifi"]["bs_enable"] == "1")
+                    $("[id='bstr_enable']").prop("checked", true);
+                else
+                    $("[id='bstr_enable']").prop("checked", false);
+            }
+        }
+        else return false;
+
+        if ("wan" in info)
+        {
+            if ("protocol" in info["wan"])
+            {
+                $("[id='protocol']").val(info["wan"]["protocol"]);
+                if (info["wan"]["protocol"] == "pppoe")
+                {
+                    $("[id='pppoe_usrname']").val(info["wan"]["username"]);
+                    $("[id='pppoe_pwd']").val(info["wan"]["password"]);
+                    if (info["wan"]["vid"] != 0)
+                        $("[id='pppoe_vlanid']").val(info["wan"]["vid"]);
+                }
+            }
+            if ("ipaddr" in info["wan"])
+            {
+                $("[id='ipv4_text']").html(info["wan"]["ipaddr"]);
+            }
+            if ("ip6addr" in info["wan"])
+            {
+                $("[id='ipv6_text']").html(info["wan"]["ip6addr"]);
+            }
+            if ("used_vid" in info["wan"])
+            {
+                used_vid_list = info["wan"]["used_vid"];
+            }
+        }
+        else return false;
+    }
+    else
+    {
+        if ("wan" in info)
+        {
+            if ("ipaddr" in info["wan"])
+            {
+                $("[id='ipv4_text']").html(info["wan"]["ipaddr"]);
+            }
+            if ("ip6addr" in info["wan"])
+            {
+                $("[id='ipv6_text']").html(info["wan"]["ip6addr"]);
+            }
+        }
+    }
+
+    
+    return true;
+}
+
+function call_xhr_get()
+{
+    console.log("call_xhr_get");
+    XHR.get('<%=luci.dispatcher.build_url("admin", "easy_setup", "info")%>', null,
+        function(x)
+        {
+            console.log(x);
+            try
+            {
+                handle_get_data(x, true);
+                $("[id='apply-button']").prop("disabled", false);
+                load_view();
+            }
+            catch(e)
+            {
+                console.log("Something wrong");
+                console.log(e);
+            }
+        }
+    );
+}
+
+function polling_ip()
+{
+    console.log("polling ip");
+    XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "easy_setup", "info")%>', null,
+        function(x)
+        {
+            try
+            {
+                console.log("getting IP");
+                handle_get_data(x, false);
+            }
+            catch(e)
+            {
+                console.log("Something wrong");
+                console.log(e);
+            }
+        }
+    );
+}
+
+function call_xhr_poll() 
+{
+    console.log("call_xhr_poll");
+    XHR.poll(2, '<%=luci.dispatcher.build_url("admin", "easy_setup", "info")%>', null,
+        function(x)
+        {
+            console.log(x);
+            try
+            {
+                if (handle_get_data(x, true))
+                {
+                    console.log("getting full info");
+                    $("[id='apply-button']").prop("disabled", false);
+                    load_view();
+                    polling_ip();
+                    XHR._q.shift();
+                }
+            }
+            catch(e)
+            {
+                console.log("Something wrong");
+                console.log(e);
+            }
+        }
+    );
+    
+}
+    window.onload = function () {
+        //AP-504
+        if (window.location.href.indexOf("stok") > 0)
+            setupTimers();
+            
+        $("[id='apply-button']").prop("disabled", true);
+        call_xhr_poll();
+    }
+</script>
+
+<form method="post" name="cbi" id="easy-setup-form" class="form-inline" action="<%=luci.dispatcher.build_url("admin", "easy_setup", "apply_cfg")%>" onsubmit="return validate_form()" autocomplete="off">
+    <div class="widget col-xs-12 col-lg-12 mb-4" id="wifi_cfg_div">
+        <legend><h2>Wifi Setting</h2></legend>
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="col-lg-12 mb-1" id="easymesh_field">
+                <legend><h5>Easy Mesh setting</h5></legend>
+                <div class="form-group mb-2" id="enable_mesh_div">
+                    <label for="mesh_enable" class="col-lg-4">Enable EasyMesh</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="mesh_enable" id="mesh_enable" onclick="toggle_mesh()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="form-group" id="device_role_div">
+                    <label for="role_sel" class="col-lg-4">Device Role</label>
+                    <select class="col-lg-3" name="role_sel" id="role_sel" onchange="load_dev_role_view()">
+                        <option value="1">Controller</option>
+                        <option value="2">Agent</option>
+                    </select>
+                </div>
+            </fieldset>
+            <fieldset class="col-lg-6 mb-1" id="wifi24_field">
+                <legend>
+                    <h5 id="wifi24_legend">Wifi 2.4GHz</h5>
+                </legend>
+                <div id="wifi24_info">
+                    <div class="form-group mb-2">
+                        <label id="label_ssid_wifi24" for="ssid_wifi24" class="col-lg-4">SSID1</label>
+                        <input type="text" class="col-lg-6" name="ssid_wifi24" id="ssid_wifi24">
+                    </div>
+                    <div class="form-group" id="pwd_wifi24_div">
+                        <label id="label_pwd_wifi24" for="pwd_wifi24" class="col-lg-4">Password</label>
+                        <div id="div_pwd_wifi24" class="input-group col-lg-6 px-0">
+                            <input type="password" class="input-password" name="pwd_wifi24" id="pwd_wifi24">
+                            <div class="input-group-addon show-password-btn">
+                                <i class="fa fa-eye-slash" aria-hidden="true" onclick="toggle_password('pwd_wifi24', this)"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" id="warn_wifi24_div" style="display: none;">
+                        <p for="" class="warn-text col-lg-11" id="no_pwd24_warn"><i>SSID1 has no password due to OPEN mode.<br>Click <a href='<%=luci.dispatcher.build_url("admin", "mtk", "wifi", "vif_cfg_view", "MT7615D.1.2", "rax0")%>'>here</a> to config this SSID</i></p>
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset class="col-lg-6 mb-1" id="wifi5_field">
+                <legend>
+                    <h5 id="wifi5_legend">Wifi 5GHz</h5>
+                </legend>
+                <div id="wifi5_info">
+                    <div class="form-group mb-2">
+                        <label for="ssid_wifi5" class="col-lg-4">SSID1</label>
+                        <input type="text" class="col-lg-6" name="ssid_wifi5" id="ssid_wifi5">
+                    </div>
+                    <div class="form-group" id="pwd_wifi5_div">
+                        <label for="pwd_wifi5" class="col-lg-4">Password</label>
+                        <div class="input-group col-lg-6 px-0">
+                            <input type="password" class="input-password" name="pwd_wifi5" id="pwd_wifi5">
+                            <div class="input-group-addon show-password-btn">
+                                <i class="fa fa-eye-slash" aria-hidden="true" onclick="toggle_password('pwd_wifi5', this)"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" id="warn_wifi5_div" style="display: none;">
+                        <p for="" class="warn-text col-lg-11" id="no_pwd5_warn"><i>SSID1 has no password due to OPEN mode.<br>Click <a href='<%=luci.dispatcher.build_url("admin", "mtk", "wifi", "vif_cfg_view", "MT7615D.1.1", "ra0")%>'>here</a> to config this SSID</i></p>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="col-lg-12" id="bstr_field">
+                <legend><h5>Bandsteering setting</h5></legend>
+                <div class="form-group">
+                    <label class="col-lg-4" for="bstr_enable">Enable Steering</label>            
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="bstr_enable" id="bstr_enable" onclick="toggle_bs()">
+                        <span class="slider"></span>
+                    </label>
+                    <label class="col-lg-6" style="color: black;" id="bandstr_warn">
+                        <i>Bandsteering is enabled, Wifi 5GHz config will be the same as 2.4GHz's</i>
+                    </label>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+    <div class="widget col-xs-12 col-lg-12" id="wan_cfg_div">
+        <header><h2>WAN Setting</h2></header>
+        <div class="d-flex flex-wrap widget-body">
+            <fieldset class="col-lg-12" id="prot_field">
+                <div class="form-group">
+                    <label for="protocol" class="col-lg-4">Protocol</label>
+                    <select class="col-lg-3" name="protocol" id="protocol" onchange="load_wan_prot_view()">
+                        <option value="pppoe">PPPoE</option>
+                        <option value="dhcp">DHCP</option>
+                        <option value="static">Static</option>
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+                    <label class="col-lg-4"></label>
+                    <span id="warn_static_wan">
+                        <label class="col-lg-6"></label>
+                        <p class="col-lg-12 mt-2" id="np_proto_static" style=" font-size: 14px; margin-left: -6%"><i>Click <span style="color: #0069d6; cursor: pointer;" onclick="visit_dfroute_wan()">here</span> to config static WAN</i></p>
+                    </span>
+                </div>
+            </fieldset>
+            <fieldset class="col-lg-12 mb-3" id="pppoe_field">
+                <legend><h5>PPPoE Setting</h5></legend>
+                <div class="form-group mb-2">
+                    <label for="pppoe_usrname" class="col-lg-4">Username</label>
+                    <input type="text" class="col-lg-3" name="pppoe_usrname" id="pppoe_usrname">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="pppoe_pwd" class="col-lg-4">Password</label>
+                    <div class="input-group col-lg-3 px-0">
+                        <input type="password" class="input-password" name="pppoe_pwd" id="pppoe_pwd">
+                        <div class="input-group-addon show-password-btn">
+                            <i class="fa fa-eye-slash" aria-hidden="true" onclick="toggle_password('pppoe_pwd', this)"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="pppoe_vlanid" class="col-lg-4">VLAN ID</label>
+                    <input type="number" min="0" class="col-lg-3" name="pppoe_vlanid" id="pppoe_vlanid">
+                </div>
+            </fieldset>
+
+            <fieldset class="col-lg-12" id="ipaddr_field">
+                <legend style="margin-top: 0;"><h5>IP Address Infomation</h5></legend>
+                <div class="form-group">
+                    <label class="col-lg-4 mb-2">IPv4 Address</label>
+                    <span class="col-lg-6 text-lg-left mb-2" id="ipv4_text">N/A</span>
+                    <label class="col-lg-4">IPv6 Address</label>
+                    <span class="col-lg-6 text-lg-left" id="ipv6_text">N/A</span>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+    <!-- <div class="col-lg-6 mt-3">
+        <div class="row justify-content-center">
+            <button class="quick-setup-apply" type="button" name="__refresh" onclick="call_xhr_get()">Refresh</button>    
+        </div>
+    </div> -->
+    <div class="col-lg-12">
+        <div class="row justify-content-center mt-3" style="">
+            <input class="quick-setup-apply" style="width:120px; height: 32px;" name="__apply" id="apply-button" value="Apply" type="submit">
+        </div>
+    </div>
+
+</form>
+<%+footer%>

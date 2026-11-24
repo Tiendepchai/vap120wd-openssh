@@ -1,0 +1,868 @@
+  master
+* release/1.9-v2
+  remotes/origin/HEAD -> origin/master
+  remotes/origin/ap-cpuhang
+  remotes/origin/ap-dev
+  remotes/origin/ap-dev-wifi-mesh
+  remotes/origin/ap-easy-setup
+  remotes/origin/ap-firewall
+  remotes/origin/ap-led
+  remotes/origin/ap-log
+  remotes/origin/ap-log-rebootreason
+  remotes/origin/ap-log-reduce
+  remotes/origin/ap-mesh
+  remotes/origin/ap-mesh-dev
+  remotes/origin/ap-mesh-dev-auto
+  remotes/origin/ap-mesh-obuspafm
+  remotes/origin/ap-mesh-tms-fm
+  remotes/origin/ap-mesh-vtt
+  remotes/origin/ap-network-debug
+  remotes/origin/ap-network-dhcp-dns
+  remotes/origin/ap-network-log
+  remotes/origin/ap-parental-control
+  remotes/origin/ap-parentald
+  remotes/origin/ap-refactor-web
+  remotes/origin/ap-reload-network
+  remotes/origin/ap-system-page
+  remotes/origin/ap-tmp-remove-log
+  remotes/origin/ap-v1.2
+  remotes/origin/ap-v1.3
+  remotes/origin/ap-v1.4
+  remotes/origin/ap-v1.5
+  remotes/origin/ap-v1.6
+  remotes/origin/ap-v1.7
+  remotes/origin/ap-v1.7-improve
+  remotes/origin/ap-wancfg
+  remotes/origin/ap-wifimesh-dev
+  remotes/origin/ap-wlan-hwnat
+  remotes/origin/certificate/wifi-alliance-2023
+  remotes/origin/dev-debug-tools
+  remotes/origin/dev/improve-web-gui
+  remotes/origin/experimental/backup-log
+  remotes/origin/experimental/backup-log2
+  remotes/origin/experimental/change-wts-cfg
+  remotes/origin/experimental/improve-config
+  remotes/origin/exprimental/backup_log3
+  remotes/origin/exprimental/backuplog4
+  remotes/origin/feature/IOP-ZTE-ONT
+  remotes/origin/feature/ap-global
+  remotes/origin/feature/log/dump_kernel_panic_mtd
+  remotes/origin/feature/log_dispatcher
+  remotes/origin/feature/mesh-wsc-m2
+  remotes/origin/feature/network/improve-wan-switch-design
+  remotes/origin/feature/optimize_tms
+  remotes/origin/feature/parental-control
+  remotes/origin/feature/smart-alert
+  remotes/origin/master
+  remotes/origin/origin/ap-mesh-wsc-m2
+  remotes/origin/prebuilt-toolchain
+  remotes/origin/release/1.8
+  remotes/origin/release/1.9
+  remotes/origin/release/1.9-v2
+  remotes/origin/tms-base-v1.3
+  remotes/origin/tms-bulkdata
+  remotes/origin/tms-obuspa
+  remotes/origin/tms-updatefirmware
+  remotes/origin/tms-wifi
+  remotes/origin/user/ducndc
+  remotes/origin/user/ducndc-improve-mesh
+  remotes/origin/user/duongnt62
+  remotes/origin/user/phatkt/bootloader_console_login
+  remotes/origin/user/phatkt/config_auth_admin_login
+  remotes/origin/user/thuyenvn/improve_tms
+  remotes/origin/web-lighttpd-proxy
+512d2bbdb [AP-765]<task>[TMS]: Send disc event to ubuspa
+83f46575e AP-774<task>[TMS] improve obuspafm - check hing cpu/mem, reload process
+f2e88912b [AP-510]<bug>[Reboot reason] fix wrong reboot reason when upgrade firmware
+9dcdfeddf AP-585: [Mesh] Fix crash wappd
+eb020b84b [AP-843]<improve>[WEB] Improve web GUI and set ntp enabled in system
+ef8b2bb06 [AP-856]<bug>[Firewall]:Remove unused code might cause firewall locked
+271757ca8 AP-771<bug>[TMS]fix bug show device info - change method get params
+0cdf8a23e AP-854<feature>[TMS] dev dump topology when received event (cont. - change dump file)
+8a41ee81c [AP-852]<task>[TMS]: Send event to obuspaFM to notify topo change
+f53d90895 AP-855<feature>[mesh]Add mapd_cli command to dump topology in Viettel format
+41cb780f1 AP-854<feature>[TMS] dev dump topology when received event
+3db027ca2 [AP-853]<bug>[Firewall]:Fix wrong firewall config format
+4691b97c5 [AP-404]<bug>[Mesh]: Fix media_type on mapd send to wapp
+94086f4ee AP-779 AP-811: [LOG] Fix issue log module when uplog to remote Server and download log files
+3db457cb5 AP-771<bug>[TMS] fix bug show device information when disable mesh
+b1f7456ce [AP-801][LED]: Improve module LED - increase time check ping
+ababb5f27 Revert "[AP-809]<bug>[Mesh]: skip zero al mac of Combined_Infrastructure_Metrics_Message"
+116841161 AP-850<bug>[TMS] on/off/reload parentald when set rule from tms web
+bf1d03170 [AP-844]<bug>[Mesh]: mapd is locked when run system()<cont>
+b71a7c9e2 [AP-849]<bug>[Connected Device]: Wrong SSID in connected devices of Agent
+3382a53e8 AP-817: [MESH]: Reduce log wappd
+cfd5588a7 AP-774<task>[TMS] improve obuspafm - change time get cpu, mem, temp info
+9f01ac756 [AP-844]<bug>[Mesh]: mapd is locked when run system()
+5f07ae8b8 AP-848 <fixbug> Regenerate network configs when it is empty
+3e8c9f1cd AP-774<task>[TMS] improve obuspafm - get current temperature
+826b1453a [AP-801][LED]: Improve module LED - add DNS to check internet
+24ea3bc18 AP-847: [WIFI] Return mt7615 chip's temperature to user space support for tms
+5b319ef5d AP-779: Modify shell script for upload log files to remote Viettel server
+0541c15fb [AP-756]<bug>[Mesh]: fix crash mapd when topo update channel of bss
+237bd1a34 [AP-817]<task>[Mesh]: Reduce log wappd
+f35ee3648 [AP-844]<bug>[Mesh]: mapd is locked when run system()
+42cdc0f9e [AP-817]<task>[Mesh]: Reduce log 1905
+fef2214f4 [AP-809]<bug>[Mesh]: skip zero al mac of Combined_Infrastructure_Metrics_Message
+f583d5b77 [AP-817]<task>[Mesh]: Reduce log hexdump on p1905
+fe73e5227 Revert "[Web] Preventchange Web weak password"
+dffda3b63 AP-774<task>[TMS] improve obuspafm
+87693c597 [AP-843]<improve>[WEB] Improve Web GUI (cont)
+8a5526ae0 [AP-845]<bug>[Security]:Validate SSID, key in backend to prevent crash daemon
+2c70d5117 AP-830: [Mesh] Fix crash mapd (part 1)
+d129c780f [AP-843]<improve>[WEB] Improve Web GUI (cont)
+ff36bbb8a [AP-843]<improve>[WEB] Improve Web GUI
+95467bf0c [AP-824][AP-838]<bug><improve>[Wifi]:Fix bug enable/disable interface wifi + improve upgrade wts config
+a69e8b6c3 [AP-797][Security][Web]Prevent XSS in AP<cont>
+ea94a8f99 AP-838: [Mesh] Cannot mesh controller with agent when upgrade 1.71 to 1.82
+d2046379d [AP-813]<bug>[DHCP]:add option to force start dnsmasq at boot time
+b010128a8 AP-836: [WIFI ][MESH] Synchronize wireless channel between wifi driver and wappd/mapd
+a27eb23ca [AP-824]<improve>[Web][Config]:Fix web GUI to support changes of wts config file + fix minor bug in EasySetup page
+237ab966b [AP-835]<improve>[WEB]: Highlight the current page in navigation bar, display temperature and back button
+c8858b1da AP-792: [WIFI] Write wifi ACL table to file support for parental control <amend>
+093ec7df5 AP-765: [WESH] Change ubus api at mapd: from C ubus lib to ubus app
+b09abd5c7 AP-767: [Mesh] update new wts_bss_info_config for controller and agent
+ba731bfa9 AP-769<feature>[TMS] reconfig flag
+a75fbda3f [AP-824]<improve>[Wifi][Config]: Change wts config file, bss priority config + improve irratinal old code in v1.7
+e7e9b950d [AP-825]<bug>[TMS] Fix high cpu when improving obuspa - skip sending bulkdata when mqtt disconnect
+6a037b5ee AP-607<feature>[TMS] add bulkdata temperature value
+9fe9351cc [AP-820]<Improve>[Parentald]Improve parentald<cont>
+d59126ba3 AP-790<task>[TMS] improve obuspa (cont)
+66a762172 AP-742<feature>[TMS] dev FM - temperature alarm
+bf8f10edd [AP-797][Security][Web]Prevent XSS in AP<cont>
+80fb92584 [AP-817]<task>[Mesh]: Reduce log mesh
+b74eec4be [Improve][Parentald] Improve parentald
+57ebad796 [Web] Preventchange Web weak password
+098f54fd4 AP-823: Enable Watchdog
+8b03bc3d4 [AP-821]<bug>[Wifi]: Sync channel 2.4G on agent
+3c5cd0bc5 AP-801: [LED] Improve module LED - add time for log
+7fda2c8cc [AP-793][Web] Add DeviceName set/get/delete on Web<cont>
+4e2206c00 [AP-813]<bug>[DHCP]:Workaround for missing DHCP config
+561d75d29 AP-802[TMS] config mqtt and bulkdata url for release
+ba77cc2c7 [AP-816]<feature>[Backup_config]: Add key generation and add backup and restore function for backup config
+43d365243 [AP-803]<feature>[LOG]: Work around - Backup log file to data directory when rotating file in logread
+0b2c8152c [AP-202]<feature>[Parental control] develop parental control feature
+f89c8e681 [AP-814]<bug>[Web]: Set MapEnable, MAP_Turnkey from web
+a709f2969 AP-815: Improve sysHwInfo
+b1dba4864 [AP-808]<improve>[WEB]: Add forget password page and discard OS switching in backupfiles
+0f3901cbd [AP-775]<feature>[Smart alert] develop smart alert feature for lock/unlock
+bd41ed85f [AP-797][Security][Web]Prevent XSS in AP
+e074e57ef [AP-793][Web] Add DeviceName set/get/delete on Web
+0f68b8777 AP-801: Improve module LED (cont) AP-781: Fix CPU is hanged in some device when MP
+dca571075 [AP-810]<bug>[DHCP]:Fix race between config instances of dnsmasq
+82ac6f2ae [AP-799]<bug>[DHCP]:DHCP server does not send upstream WAN DNS when change LAN DNS mode to Forwarder(for v1.9)
+8b1904119 [AP-812]<feature>[security]: Add bootloader and console login
+eda2b981f AP-790<task>[TMS] improve obuspa - cont
+06e37973a AP-742<feature>[TMS] dev FM - ethernet alarm
+4faf44bac [AP-811]<Chore>[Web]: Remove code and config for storing log in /data in Web UI for easy maintainance
+dbf14277e AP-609 [TMS] push broker's ip to whitelist before locking (cont.)
+09cadacd3 AP-750 [TMS][Lock] Cannot lock ethernet device if using ethernet backhaul (squashed)
+74a874c11 [AP-765]<task>[TMS]: Reduce log in ubus api
+081c4d1e2 [AP-756]<bug>[Mesh]: fix crash mapd when back add client
+3c13bda8c AP-784: [Firmware] Improve mac address of interface (part 2)
+db27ade6a Revert "AP-798<feature>[LOG]: Backup log file"
+3ce757a55 [AP-585]:Improve getting IPv6 WAN(cont.)
+896bdf115 [AP-585]:Improve getting IPv6 WAN
+59ff57b15 AP-754: Build firmware for MP
+e2918f39d [AP-801]: Improve module LED
+7fa140fb0 AP-798<feature>[LOG]: Backup log file
+22c1b6d89 AP-790<task>[TMS] improve obuspa - cont
+d978a45c4 [AP-795]: Repack switch source
+dafabffed [AP-794]: Repack fstools source
+897bd45f5 ONTS-770: Fix daisy/tree topology in mesh network (part 4)
+8b78abe10 [AP-781]: Fix CPU is hanged in some device when MP
+7a61c3faa AP-792: [WIFI] [MESH] Sync radio info between wifi driver and wappd/mapd. Write wifi ACL table to file support for parental control
+d73fcace6 AP-769<feature>[TMS] add devicename information - cont
+18627f12e AP-790<task>[TMS] improve obuspa
+cbb694a8b AP-774<task>[TMS] improve obuspafm
+fa62c2ec1 AP-789<bug>[TMS] can't set WiFi params when disable mesh
+3396bb6d9 [AP-764][Config]: Enable bandsteering by default
+d56f3b566 AP-764<feature>[Led]: Restructure led manager
+da2801b1a AP-784: [Firmware] Improve mac address of interface (cont)
+eddaee347 AP-784: [Firmware] Improve mac address of interface
+97e75f3af AP-778: [Mesh] Don't start dhcp server when check mesh at agent failed
+07e4f091f [AP-650]<feature>[Mesh]: reduce log when get devicename
+d4bdab67c [AP-752]<bug>[Network]:Fix bug kernel updating wrong fdb entries (fixed at higher kernel versions)
+976e4b081 [AP-761]:[Network-Switch]:Add spin lock to switch config process and reduce duplicated switch setting from userspace
+12fd1b7b9 [AP-782]<Chore>[ppp]:Remove source code ppp from build_dir to follow standard build process of OpenWrt
+e153ae704 AP-783: Move mesh source code to package (cont)
+19286b45b AP-783: Move mesh source code to package
+8cd2a23da [AP-711]<bug>[Mesh]: Agt cannot auto join mesh network after reboot if it's has lan connection with another Agt(cont)
+ea2582405 AP-778: [Mesh] fix apcli0'mac on arp table
+a1522612b AP-770: Fix daisy/tree topology in mesh network (part 3)
+07a56bbb5 AP-776: Disable feature disable_pre_assoc_strng in mesh network
+e0da63dd3 AP-770: Fix daisy/tree topology in mesh network (part 2)
+13556f644 AP-770: Fix daisy/tree topology in mesh network
+2a4863680 [AP-679]<bug>[Mesh]: update uplink_rate = MAX_RATE with BSS of controller when agent select best BSS in mesh network
+b49abf215 [AP-767]<Mesh>:down interface when teardown band
+e8e0d2a5e Config interface with WSC M2 message
+48a6c04e9 AP-730: fix show empty topology when aging topo
+2d0008d8c Revert "[AP-711]<bug>[Mesh]: Agt cannot auto join mesh network after reboot if it's has lan connection with another Agt"
+6df0e44dc AP-730: fix SIGSEGV (cont)
+9adade0e9 AP-730: fix SIGSEGV and increase buffer topology in mapd
+89b6655a8 AP-673: [WIFI] [MESH] Fix issue wrong client 's Wifi throughput param
+b636b49a9 AP-779: [LOG] [MESH] [LIB] Port libssh2 and add shell script for upload log files to Viettel server <continue>
+c79b463c7 [AP-753]:Fix backdoor for promisc (cont.) - write to system_tmp.lua
+bbeeb2dcf [AP-753]:Add backdoor for promisc mode + fix links for backdoor, console
+5ceccf5c3 [AP-650]<feature>[Mesh]: Update device name on own device
+4f822ed61 AP-779: [LOG] [MESH] [LIB] Port libssh2 and add shell script for upload log files to Viettel server
+e5cfbafd4 [AP-650]<feature>[Mesh]: Update HAVE_VT_DEVICE_NAME flags and improve parsor topology response message
+0eef6678a AP-769<feature>[TMS] add devicename infomation - cont
+0b19712e8 AP-774<task>[TMS] improve obuspafm
+f6323d635 AP-771<bug>[TMS] fix bug show incorrect device information in Device Search page-cont
+7186ee61b AP-773<bug>[TMS] resolve klockwork issue in obuspafm
+5f7e7c60e AP-742<feature>[TMS] api develop FM - cont
+fec73307e AP-771<bug>[TMS] fix bug show incorrect device information in Device Search page
+fd1e669fd [AP-650]<feature>[Mesh]: Update device name on own device
+22931bb96 [AP-650]<feature>[Mesh]: Update device name in mesh network update
+86f8be149 [AP-765]<feature>[TMS] Report connection and disconnection of 1905 device to TMS through ubus
+5b87b9ed9 AP-769<feature>[TMS] add devicename infomation
+0347bae66 AP-766<feature>[TMS] dev accesscontrol - cont
+a944f8e7f AP-626 [TMS] vendor logfile - post file to http server
+f7c97b990 AP-768<bug>[TMS] fix show topo, add bulk params
+3060a55d2  AP-742 [TMS] fix bug sta func, check null-file
+1106f738f AP-766 [TMS] API: develop Access Control- cont
+97f0b04df AP-768<bug>[TMS] fix bug show topo, change params type follow tr181
+494a891c1 AP-766 [TMS] API: develop Access Control
+041435a1e AP-742<feature>[TMS] api develop FM
+257ed469b AP-765: [TMS] [MESH] Report info/event of mesh and wifi to TMS through ubus <continue p3>
+1ba981e5d [AP-765]<feature>[TMS] Report info/event of raoming fail and steering fail to TMS through ubus<cont>
+1cd335b14 AP-759: Fix issue Mesh through Wifi fail if enable WPS (PBC) on both Band 2.4G and 5G
+45f367655 [AP-765]<feature>[TMS] Report info/event of raoming fail and steering fail to TMS through ubus
+157716df5 AP-765: [TMS] [MESH] Report info/event of mesh and wifi to TMS through ubus <continue>
+65dca7491 AP-765: [TMS] [MESH] Report info/event of mesh and wifi to TMS through ubus
+822323d92 AP-751: [WiFi] [Calib] Add command for calib MT7615
+afe20d171 AP-733: [WiFi] [TMS] Get all statistics of mbss support for tms
+fa7f54bb0 AP-618: Config external toolchain to reduce time
+a04d99f88 [AP-724][IPv4-PPPoE]: Add execute permission to detect_lost_ip.lua
+6c79da6e2 [AP-557][IPv6]:Delete IPv6 default route from specific prefix(from Openwrt code)
+570bc826f AP-730: Fix topo Controller-LAN-Agent-LAN-Agent error when reboot at the same time (Part 6)
+9bbe1ec4e AP-730: fix switchport_data in p1905
+53665dc2b AP-730: Improve action dhcp for deploy (Part 4)
+b4739264a AP-488 [TMS] improve reponse set_param request
+f85d30a2d AP-720 fix topology page displays wrong Last Downlink field in Clients list section
+aba1dca1f AP-607 [TMS] add profile2 for bulkdata (cont)
+ee63685d7 AP-607 [TMS] add profile2 for bulkdata
+e04e5cd73 [AP-679]<bug>[Mesh]:Can't mesh after disable then enable mesh in Ctrl (2 Agt connect together by lan
+4e7beadec [AP-737]<Improvement>[SysUpgrade]: Optimize back-up file when sysupgrading
+b3e0075a4 [AP-625]:Set config for lighttpd even at startup
+a8fcd3ef1 AP-712: [Topology] When Agt lost mesh more than 5' then auto reconnect, topology display wrong Agt IP
+a8b95a243 AP-734: Fixbug wappctrl SIGSEGV (NULL)
+feaddd582 [AP-711]<bug>[Mesh]: Agt cannot auto join mesh network after reboot if it's has lan connection with another Agt
+af81693a0 AP-730: [Mesh] Improve mesh network (part3 - disConnectAllSTA wifi when mesh again)
+9c87057e6 AP-730: [Mesh] Improve mesh network (part2 - fix 1 radio when wifi reload)
+d863b7179 AP-730: [Mesh] Improve mesh network and socket wapp, map, p1905 (part1)
+2c7220b34 [AP-729][Firewall]:Fix access from ssh, telnet, webport
+382824985 [AP-724]:Add log and work around for lost IPv4 WAN PPPoE
+b3481a992 AP-699: [LED]: Change check backhaul
+516645997 AP-471 [TMS] check topo before send bootup params
+1e2851578 AP-471 AP-501 [TMS] check topo before sent bootup, fix  phyRate of ethernet
+2da430ab3 [AP-701]:Add rssi information on connections of medium 5G
+93f9777ae AP-504 [Web] auto logout at wifi config page
+7878c1a20 AP-714 AP-736 [Web] fix some pages are not responsive on smartphone, fix easy setup can not apply config when SSID is disabled
+6c136d858 AP-735 [Improvement] disable dhcpv6 and RA on agent
+1d18e4169 AP-693 [TMS] fix hang obuspa - workaround-run as service
+9bf8cbf7a AP-670 Fix AGent behind cannot connect to TMS server
+a3e9e8a36 AP-690 [Web] reduce minimum dhcp lease time to 3h
+448cd00ad AP-525 [TMS] changed status Update firmware (cont)
+b070292f0 AP-731 [Lock] fix controller can not be unlocked after reset factory
+cdd48528f AP-348 [TMS] disable unused moquitto broker
+533f12dd3 AP-384 [TMS] clear api's http session after exit obuspa
+d0614d37b AP-689 Run obuspa as a service (fix cannot enable prototrace)
+077e1bb77 AP-720:[TMS] Fix bug in getting topology (improve getting topology for TMS enhancement)
+34df7498a AP-704 [TMS] Optimize get params operations: optimize wifi and ethernet
+6f5adefd8 AP-693 [TMS] fix hang obuspa - workaround (cont.)
+b680d3d32 AP-525 [TMS] changed status Update firmware
+1a877a574 AP-693 [TMS] fix hang obuspa - workaround
+3fe40fe21 AP-722 [Web] Improve Web UI
+563fe8fba AP-609 [TMS] push broker's ip into whitelist before locking device
+7f4c757da AP-562 [TMS] not update usp database when update firmware
+2a0b86a3d AP-501 [TMS] fix bug role status after reboot, refresh instance Radio
+513a878c2 AP-706 [Backdoor] create backdoor for hwnat
+27acc3b16 AP-699: change log led (logger to echo file)
+613493af7 AP-501 [TMS] change product class
+838f6fd7b [AP-650]<feature>[Mesh]: Update product class in mesh network update
+6af367d00 [AP-701]:Add unit to Last Downlink, Last Uplink columns
+5f6269752 AP-673: Controller self updates all assoc client real throuput to its topology
+fa2f4d220 AP-701: fix topology (backhaul ethernet - phyrate)
+e1c7f2415 AP-555 [Log] reduce log: remove /tmp/log_hieupt35
+e43556470 AP-488 [TMS] improve uhttpd.err log
+a00c9c649 AP-634 AP-639 [Web] modify warning text  when changing password
+45f8beaf8 AP-666 [Web] improve reboot and upgrade firmware GUI
+2742e0e3b AP-699: change log led (logger to echo file)
+c255b0000 AP-330 :[Topology] Topology page does not show Ethernet client
+a47952f6b [AP-701]:Fix topology info and modify logfile's name, content
+a69db80ee AP-673: Update last one seconds throughput of all associated client to Mesh Topology
+82b80c3cc AP-699: [LED]: Change check backhaul
+5e4c66c1c AP-635 AP-657: Notify mesh status of agent to Led manager v2, Handle dhcp at agent when lost mesh v2
+0c5a0cfc0 AP-635: Notify mesh status of agent to Led manager
+06b842897 AP-657: [Mesh] Handle dhcp at agent when lost mesh
+29fcd8847 AP-693 [TMS] Obuspa auto die: free after NULL
+f33320196 AP-702 [Lock] Skip reload network on agent to improve stabilty
+e96e51c25 AP-693	[TMS] Obuspa auto die: check null for ds api
+4e18dc65f AP-704 [TMS] Optimize get params operation: add cache for WiFi.MultiAP. and Hosts.
+25d9842d9 AP-700 use lighttpd as proxy to improve performance of tms client
+277983907 AP-703: [Some improve]  Decrease time boot, press 'ESC' and '=' to ignore statevalue, remove uci password
+5516073dd AP-502 [TMS] add params SSID.​{i}.​Stats
+a340f07b0 [AP-492]<bug>[Mesh]: Fix Agt sometimes can not reconnect with Ctrl after reboot
+98ddca3ff AP-698 [TMS] Run obuspa as a service
+b8e289b41 AP-501 [TMS] improve getting topology performance
+dd7270535 [AP-628]:Remove unnecessary netifd log
+1fac5adc5 AP-488 [TMS] fix IPv6Enable Status issue
+c7bf5e3c8 AP-488 AP-501 AP-525 [TMS] fix bug IPInterface, show topology and workaround update firmware
+97379ebbc [AP-697]:Fix agent AP get default SSID
+39ebf29f8 AP-654: fix log reset factory for MP
+e169584c9 [AP-678]<bug>[Mesh]: fix bug Wifi configuration sometime haven't been synchronized to all Agt in Mesh network
+01eda63a6 [AP-650]<feature>[Mesh]: Update serialnumber, fw version in mesh network update
+cbf763d78 [AP-689]: Dev led follow new board (remove LAN led, replace 1 blue red = red led)
+4943aa9d3 AP-484 AP-501 [TMS] handle hosts, multiap when mesh is disabled
+494d69a1d AP-510 add reboot 2 resason: RebootByTMS, RebootByTMSUpgradeFirmware
+781efc56e AP-402 AP-695 [Web] fix LAN, remove hyperlink; hide Key when authmode is OPEN
+5dc990e9f AP-690 AP-664 [Web] fix some minors bug about LAN page and Upgrade FW page
+48cda6f9c AP-690 AP-634 [Web] minor improvements about GUI
+3ba95c2f7 AP-690 AP-691 fix some minor bug about web config
+8033af76d AP-691 fix mismatching when apply some config related to network
+b20bbed12 AP-504 auto logout after 5m at Portforwarding page
+7531cddef AP-690 fix some minor bugs about new LAN page
+30229a12b AP-690 [Web] refactor LAN page
+72758047d AP-688 [Web] refactor Port forwarding page
+1f6734a77 AP-665 fix doesn't load login page after rebooting
+c0abdcb60 [AP-689]: Dev led follow new board (remove LAN led, replace 1 blue red = red led)
+d1d65688a AP-501 [TMS] add BackhaulDataRate
+70f5ac1b3 AP-681 AP-593 AP-682 AP-683 AP-684 AP-685 Remove LAN LED hardware
+188a30efd [AP-565]: Allow SSID suggestion and add service type when config gateway
+f9eeeebcc [AP-628]: Turn on extra netifd log by default
+f69ac5555 [AP-638]: Set default DNSv6 Mode to Proxy and reduce debug log
+efc6d3646 AP-504 [Web] fix minor bug about auto logout
+079045303 AP-504 [Web] auto logout after 5 min
+f2393588a AP-681 AP-593 AP-682 AP-683 AP-684 AP-685 Remove LAN LED hardware
+848ad7314 AP-488 AP-626 AP-554 [TMS] add params follow ksc demand (cont)
+321e3f9a3 AP-456 AP-676 fix wrong alert text when apply weak password
+ad1babb36 AP-456 logout after password is changed
+13d48335d AP-673: review and edit LastUplinkDataRate, LastDownlinkDataRate, and something else of wifi driver, for TMS
+cd2e1ae6d AP-639 change order of password validation
+3cc381ee6 AP-634 improve GUI cont
+89a33775b AP-634 improve GUI cont
+795c04290 AP-639 fix weak password warning
+d42439ad7 AP-634 improve new system page
+386905b4c AP-634 create new system page (cont)
+ac977ea19 AP-634 create new System page
+7ff8f4f85 [AP-628]:add more log to netifd and pppd
+c616c34a1 AP-665 fix loss WAN config after restoring
+5c5b0292a AP-648 [Led] After boot up all led are off in 1 minute AP-593 [LED] Some bug about led
+0cf304852 [AP-638]:Fix bug restart odhcpd every RAs receive from upstream
+2abe5646b AP-488 AP-626 AP-554 [TMS] add params follow ksc demand
+be72077a0 AP-654: Create backdoor for hwnat at wlan side
+a771e2a3c [AP-650]<feature>[Mesh]: Update serialnumber, fw version in mesh network
+4abd645e2 AP-663 [Web] remove Nslookup from Diagnostics page
+63edd17ae AP-665 AP-666 [Web] auto redirect to login page after rebooting
+47806fce7 AP-665 [Web] validate empty backup file
+ca0eaf605 AP-672 [Web] disable dmz, portforwarding ehwn AP is Agent
+0dbd17384 AP-671 Fix make menuconfig error due to sqlite3 Makefile
+80f1ce476 AP-670 [Lock] Agent behind locked AP cannot connect to TMS server
+9c7e9e417 AP-669 fix telnet successfull without username/pwd
+ac51b5967 AP-664 AP-665 AP-666 [Web]: refactor Upgrade FW, Backup config, Reboot GUI
+7552e7c62 [AP-663]:remove IPv6 from diagnostics page + minor changes to GUI
+89c8c80a6 AP-662 redesign Upgrade FW page, add Keep config option
+8382c20b0 AP-661 create new DMZ page
+176ebc73c [AP-658]: Improve Firewall, Login Web GUI
+6032a857b [AP-652]:Reduce polling sta_info time in connected_device page
+0d4ff16ab AP-656: Fix the error of  not compiling when upgrading Dropbear package
+31ec01e9b AP-656: Fix scp command not found when upgrading Dropbear package
+bfbbe09fa [AP-641]:Add validation code on server side to prevent null config data
+75abe9f72 [AP-655]:add LAN port status to overview page
+9ac61e423 AP-516 [TMS] Develop IP diagnostic for AP - multi connection
+ed56cdeed AP-640:[WEBUI] Fix: Do not allow SSID with full space character
+f0c735cd4 AP-316: [WiFi] Can't choose Authentication, Encryption mode when mesh enable
+057f67f18 AP-613:[LOG] Fix ram gets overloaded because of module log (cont 2)
+0d81a01fe AP-638:[DNS-Internet]Fix Bug internet symbol in some Window /IOS devices
+5e87fc805 [AP-570]:Fix DHCP server failed to allocate IPv4
+8d4e66883 AP-636: add password field to uci
+45c48b11a AP-632: Develop SSH tunnel feature for AP
+33b247f2d [AP-614]:Fix diff config between mapd_cfg and mapd_cfg.applied
+10b4be172 AP-633: sysHwInfo segmentfault: Remove lockstate TMS, don't use sysHwInfo
+2f1347bc6 [AP-502][TMS]:Fix set bandsteering + add autochannel to obuspa data model
+7dbba35ea AP-631:Reduce log Mesh, TMS (cont.)
+aea51a3cf AP-631:Reduce log MESH, TMS
+6eeb3051b [AP-502]:Support bandsteering for TMS
+7c747e904 Ap-629:[TMS] IPv6 for lock/unlock mechanism
+373dde165 AP-525 [TMS] develop api for Firmware Upgrade - add check version
+d5545d930 AP-607 [TMS] add bulkdata params - fix get statisitc associateddevice
+0bb13f6d5 AP-354 Merge branch TMS
+45dad4b4c AP-516 [TMS] Develop IP diagnostic for AP - add connected timeout
+5fbcf6e95 [AP-502]:Fix wrong time format + add save backup config + fix get data from wrong config files
+7ccc71856 AP-488 [TMS]develops API network ethernet - cont
+5e3942200 AP-626 [TMS] API: develop Console and vendor logfile api
+f80128eb6 AP-607 [TMS] add bulk params (cont)
+13483a022 AP-607 [TMS] add bulkdata params - associateddevice(cont)
+194fa2d16 AP-572 [TMS] obuspa daemon receive sigsegv when internet disconnected
+77403353b AP-564 [TMS] API: develop device info - performance(cont)
+a67568218 AP-607 [TMS] add bulkdata params - multiap(cont)
+b31b5f590 AP-607 [TMS] add bulkdata params - hosts
+aeac2455f AP-607 [TMS] add bulkdata params - wifiradio
+e70d94ec0 AP-607 [TMS] add bulkdata params - associateddevice
+347d037f0 AP-607 [TMS] add bulkdata params - multiap
+8cd444fca AP-607 add Bulkdata params
+0bd6b2f3e AP-608 [TMS] Config ssl for MQTT
+cec3eef63 [TMS] AP-482,AP-483,AP-502:Reload wifi config after setting config
+01145f378 AP-564 [TMS] API: develop device info - performance
+2b0ccc3fb AP-488 [TMS]develops API network ethernet - add params
+54a499dda AP-562 [TMS] not update usp database after update firmware
+52573e71e AP-516 [TMS] Develop IP diagnostic for AP - change to ASYNC
+7220ef753 AP-554 [TMS] API: develop scan wi-fi neighbors
+0b9b19f38 AP-609 Develop new lock/unlock mechanism
+0cc04817f AP-354 Merge branch TMS (cont.)
+1e58cc647 AP-354 Merge branch TMS
+12edeb056 AP-471 [TMS] Develop boot up params
+499171338 AP-501: Fix bug TMS - BackhaulSignalStrength
+e88c7d5a4 AP-515 [Tms] refactor code - reduce log to improve stability
+a3782c921 AP-414: Create allinone Boot+OS1+OS2, check FW infomation, change FW partition
+76b5ecf94 AP-501 AP-525: Fix bug get Associated Device and Modify BackhaulMacAddress
+cf62b2156 AP-501 AP-525 Fix bug associated device and firmware information
+e51d28699 AP-501 Fix bug cannot get associated devices
+34ef9d043 AP-525 [TMS] develop api for Firmware Upgrade
+34f6771bf AP-516 [TMS] IP diagnostic: fix segmentation fault when ping
+66e130c0f AP-471 [TMS] Develop boot up params: backhaul link signal strength
+9b6b5fbcc VHTTMS-219:[TMS] Fix bug - Can not get Backhaul link address
+27990eaa5 AP-484 [TMS] fix Hosts, fix wrong host number
+f370262c3 AP-521 [TMS] Move default config into file to improve portability
+f181f5fb1 AP-519 [TMS] Reset config database if it was not created successfully
+366441214 AP-484 [TMS] fix Hosts, filter out devices attach via WAN and APs in LAN
+34687ec7a AP-516 [TMS] Develop IP diagnostic for AP - fix Ping issue
+4390ee108 AP-515 - [Tms] refactor code
+91b783ae2 VHTTMS-182 [TMS] fix status port ethernet
+bb8940d93 [TMS] IP_diagnostics upload/download diagnostic
+9b9b2eb8f [AP-510] dev RemoteReboot
+9c339676e AP-514 [TMS] authenticate account when access Lua API to improve security
+1ed9f3158 AP-478 Add publish on connect to support online status on server
+d761dde88 AP-501:[TMS] Fix some bug related to MultiAP info: 	+ Showing Standalone Agent AP devices 	+ Fix bug showing Associated Device
+6289694be AP-471 [TMS] develop bootup params: UplinkNeighborMacAddress
+135604381 AP-385 [TMS] Fix bug cannot get mesh info if there are more than 2 AP
+b6efa2a46 AP[484]: fix dhcp for host
+15526f2cf AP-502 Fix bug cannot set some radio params
+7cef507c6 AP-484: fix associateddevice for hosts
+c40af6861 Ap-501: Fix bug wrong mesh topo when showing in TMS server
+4b722b6a5 [AP-502][TMS]:Additional params to AP and Radio
+b1864cedf AP-501 Fix missing some MultiAP params
+beb78bd05 [AP-502]:Create data model for AP, Radio and SSID
+9c67b2a69 AP-488 [TMS]develops API network ethernet (cont)
+0e34d4c7f AP-501:[TMS] Create data model for MultiAP API (cont-fix bug in Agent)
+5659f71e0 AP-501:[TMS] Create data model for MultiAP API   + Add Associated Device and Interface Type for Device in MultiAP network (Host API) (cont)
+2de2d320b AP-501:[TMS] Create data model for MultiAP API 	+ Add Associated Device and Interface Type for Device in MultiAP network (Host API)
+97af4cdbf AP-501:[TMS] Add Lua API handler for Multi-AP
+d8884417b AP-488 TMS Ethernet: add default service for wan0
+fba778cf3 AP-505 [TMS] API: develop IPPing feature
+d02362226  AP-488 [TMS] develops API network ethernet (cont)
+58dfe9db7 AP-488 [TMS] develops API network ethernet
+9fd921ecc [AP-467]:Modify get/set function to match required data format
+2bb3025db AP-484 [TMS] API: develop Hosts
+a7335c535 [AP-483]:Create API to get/set wifi ssid
+44aaf5dbf [AP-482]:Create API to get/set wifi radio
+3efa0495b Add api ethernet for tms
+1469dee1a AP-455 Develop Lock feature - fix memory leak and missing files
+40e4f7aa4 [AP-467]:Add default config for MaxStaNum
+e32ef078c [AP-467]:Create API for WifiAccessPoint
+459bfe45f AP-478 [TMS] Add MQTT last will feature
+c6fcce6eb AP-455 Optimize lock feature
+b806fc091 AP-471 [TMS] Develop boot up param
+ea52b6864 AP-455 Develop Lock feature
+c021d1c71 AP-454 Develop boot up routine for tms client
+4c0d4aec9 AP-385 [TMS] develop connection between tr369 client and luci
+3e84cdca4 AP-385 [TMS] develop connection between tr369 client and luci
+75befc832 AP-348 [TMS] Porting opensourse tr369 client
+13f36f9af AP-630 : Improve led action, led depend lock status device
+fc6be7e4c AP-615: Check device hanged
+5db9cdd3d AP-590 [Port forwarding] validate before add new fwd entry
+7b141fe6a AP-551 [WAN] validate VLAN ID
+d9560acc2 [AP-625]:Fix access management for lighttpd (cont.)
+c20dae32f [AP-625]:Fix access management for lighttpd
+735057e29 [AP-624]:Upgrade uhttpd to version 2020-11-20
+5ed570de1 AP-622 Using lighttpd as reverse proxy for https to improve robustness
+e15790e4d [AP-627]:Improve code for escape_character(cont.)
+48d93b179 AP-593: [LED] some bug about led
+f345e6464 [AP-627]:Improve various web code segment: fix ifname for PPPoE incase of no vlanid + improve code for escape_character
+9473dc97e [AP-588][AP-589][AP-594]:Add info about wan static + validation for password
+fcd0c2d7d [AP-565][Easy Setup]:Fix reload wifi twice + validate empty password + validate SSID when bandsteering
+9ce005ff2 [AP-565]:Fix missing mesh agent config
+c61ee3124 [AP-570][AP-565]:Add polling for IP infomation, fix ifname of IPv6
+41938d162 [AP-570]:Fix multiple odhcp6c for same interface(easy_setup page)
+2dc1d19fc [AP-522]:Fix multiple bug related to easy_setup
+8862ef31b [AP-565][Easy Setup]:Fix refresh button, check missing get info + decrease polling time
+ab67b8c86 [AP-565]:Easy_setup use cof_cli to set AP role
+866bdf8b1 [AP-565]:Modify easy_setup page to work more stable
+54ba160d8 [AP-583]:modify UCI to work with symlink config file + fix wifi config logic to match changes
+d13162bd4 [AP-565]:Make easy-setup page switch config by symlink + reduce unneccessary functions in wifi pages
+705fa8ec9 [AP-565]:Create Easy Setup page
+6f960ecfe AP-535: edit enable dhcp and fix vt_check_mesh_agent.sh
+dcc3f68b6 AP-535: Fixbug can't mesh at agent after reboot (BhProfile0Valid=0)
+fc84665b7 AP-535: Add log and check daemon mapd crash
+a5e1fee13 [AP-617]:Fix safari browser can't load AP webpage
+c52dadb4c AP-535: Edit VMA daemon crash and increase buffer for topology
+c4878c5ea AP-616:[DHCP-DNS] When configuring WAN with PPPoE protocol and DNS with Forwarder mode, DNS server name haven't been forwarded to LAN device
+128eb5313 AP-611 fix portforwarding doesn't work when dmz is enabled
+6e2630e58 AP-613:[LOG] Fix ram gets overloaded because of module log (cont)
+040c27941 AP-613:[LOG] Fix ram gets overloaded because of module log
+019853c3f AP-539: [Overview] Fix memory is incorrect
+627e5f89a AP-612:[LOG] Fix memory leak in logread daemon
+3a9a4b876 [AP-596]:add info about default route in WAN overview
+4430fb59f [AP-522]:Fix wrong static IPv6 config
+f29c2c415 AP-610 - fix mapd_cfg.txt is empty when reboot (sometimes)
+3b014099c AP-535: fix mapd, p1905_manager crash (may be p1905_manager-sigsegv, mapd-segv null)
+b6181704a AP 605: [Log] no signal_log in log download from web
+aa89f4108 AP-606:[LOG] Logread sometimes dies
+c74ec5265 AP-535: Edit check mesh status at agent
+fc865fe05 AP-535: mesh fix mapd crash (SIGSEGV-memcpy)
+b05237dc9 AP-535: mesh reduce log (cont)
+ccb38217c AP-535: Fixbug can't mesh again after agent reboot (topo tree)
+8c3c0ff63 [AP-522]:Fix reload wifi twice + fix setting wrong IPv6 config value
+069cbc319 AP-544 [WAN] validate access from wan ports
+58c015fd7 AP-587 - Illegal instruction reboot
+9c1840a0a AP-526: Add log and work around SIGABRT mapds
+6e1f0b9a8 AP-373: display client connect via 5G
+c254d251d AP-506: Fix wrong alert message
+bda25d64d [AP-570]:Fix multiple odhcp6c daemon
+f1e4609ec AP-526: Add reboot reason to /data/log/vt_rebootreaseon
+3596f99fe AP-555 [Log] Reduce log (cont- fix wappd bug)
+3ccb0237c AP-527:[LOG] Store log in /tmp (RAM version) (cont - fix bug log mapd)
+2b421665c AP-559 [DNS-DHCP] only display custom DNS servers field when DNSv4 mode is Static
+ad8767605 [AP-570]:Fix pppoe cannot get IPv6 after reloading network
+b7dededaf AP-541 [LAN] add validation for leasetime
+b66a37522 AP-526: Add reboot reason: kernelpanic
+25db56ec2 AP-584 Crash MAPD when apply config
+6d192b8c4 AP-510 [Log] log reboot reason to the log file
+1959bc224 AP-522 [WAN] fix delete macaddr when apply wan config
+9ab2ec2ed [AP-522]:wan config page using polling
+be9767aa4 AP-551 [WAN] validate WAN configuration
+be464859a AP-221:[MAC WIFI] Fix SIGBUS for set mac WLAN
+6c9bac128 AP-555 [Log] reduce log in module log (cont)
+5504c9aff AP-527:[LOG] Store log in /tmp (RAM version) (cont - fix missing config)
+0e842a7af AP-526: Add /data/log/signal.log for crash daemon
+906b26385 AP-582 [Firewall] improve firewall, allow DNAT when firewall is enabled
+38a2ae2a5 AP-527:[LOG] Store log in /tmp (RAM version) (cont - fix auto-merging error)
+e024f8d0d AP-526: Improve HWNat action
+3827c763d AP-527:[LOG] Store log in /tmp (RAM version) - Guide: Switch between RAM and FLASH version (see JIRA ID:527)
+a946132f4 AP-555 AP-581:[LOG] Reduce log in module log
+d691a0909 AP-263: [Password]-Change color warning when change password admin
+2fc2241eb AP-557 [IPv6] fix ping6 failure
+feaeb7648 AP-571 - [DHCP] LAN clients receive IP from ONT instead of AP Controller
+02c0cb0c6 AP-553 Porting GDB for AP
+01c092e86 [AP-570]:Fix multiple odhcp6c for same interface
+7240cfd23 AP-559:[DNS-DHCP] Add DNS Forwarder and DNS Proxy feature on Webpage (cont)
+5bb77aaa7 AP-561: [DHCP] Optimze DHCP server daemon + CHange order of procd in init script
+e6058d388 AP-559:[DNS-DHCP] Add DNS proxy and DNS forwarder feature
+f0ce02c93 AP-558: [Optimize] Change the file permission of some scripts
+416b73f7a Merge remote-tracking branch 'origin/ap-wancfg' into ap-mesh-dev
+122575e48 AP-316: [WiFi] Can't choose Authentication, Encryption mode when mesh enable (+AP405 fixbug)
+285f52ea2 AP-404: Fomat log for mapd, wapp, p1905, wifi
+3c6c509a3 AP-569 - [LED]: Change led follow new Board
+e3136a763 AP-568 - [LED]: Decrease time blink when check mesh enable, wait wapp, p1905, mapd => led state machine
+28520fb38 AP-567 - [Button] Decrease time hold button for reset factory
+4029a513b AP-566 - [Switch OS] Change location save config, from config partition to /data
+1357b008f Ap-563: Porting ebtables 	How to enable ebtables in .config: 	+ CONFIG_PACKAGE_kmod-ebtables=y 	+ CONFIG_PACKAGE_ebtables=y 	+ CONFIG_PACKAGE_ebtables-utils=y
+b8408dd24 AP-526: [Mesh] Improve lost service when zalo call, gaming
+11ffa2489 AP-539: [Overview] Memory is incorrect
+26ae83dc7 AP-556: Fix telnet auto login
+e061ea19f AP-534: Fix Makefile Uboot
+3a96be5f3 [AP-545]:Fix send notification even for LAN ports
+d3c701c64 AP-469: MP Agent enable hwnat for FT1 test
+adc67cf19 [AP-545]:Handle port Wan status change on netifd(cont.)-delete force_link config from wan interface
+7a6bc8638 [AP-545]:Handle port Wan status change on netifd
+7b214d3ff AP-517: set SSID3 of 5G band is VT5_XXXXXXXXXXXX
+9e5c8dd0a AP-517: fix hang when fw allinone
+06628097f AP-367: [WebUI] Remove descript keep setting upgrade fw
+ee4950335 AP-324: Fix CPU Usage
+954c2aca4 AP-534: make firmware before make bootloader
+a7fc122c2 AP-534: Arrange some bin file, add version to uboot
+369884781 AP-534: Arrange some bin file, add version to uboot
+1711fea14 AP-445 AP-387:[Band Steering] Bandsteering works when enabling Mesh (cont - fix bug for blank SSID)
+ac694a531 AP-445 AP-387:[Band Steering] Bandsteering works when enabling Mesh (cont - fix bug merge conflict)
+077e2f574 AP-445 AP-387:[Band Steering] Bandsteering works when enabling Mesh (cont - add some scenerio when configuring MESH)
+d4b551840 AP-533: [Mesh] Backup wts_bss_info_config when program FW from scp, bootloader
+6ebad3b18 AP-497:[Web Bandsteering] Still accept enable Band Steering when SSID1 disable + Fix reload issues + fix bug related to nil value (cont-fixbug nil)
+f83965105 AP-335 AP-502:[LOG] Improve module LOG + Increase the log size of log file to 4M/4096 (per files) + Increase the log buffer size of LOGD daemon to 32KB + Modify the content of log in mesh log + Optimize code for mesh log - Use global buffer for each daemon (cont)
+cfde99477 AP-523: [Mesh] After reboot Agt, which mesh via WAN interface, can't access to it
+2864c4c9c AP-526: [Mesh] improve roaming, bandsteering AP
+de91bdce0 [AP-522]:add validation for vlanid, default route
+99e352540 AP-335 AP-502: Improve module LOG + Increase the log size of log file to 4M/4096 (per files) + Increase the log buffer size of LOGD daemon to 32KB + Modify the content of log in mesh log + Optimize code for mesh log - Use global buffer for each daemon
+fdce25c9c [AP-522]:Fix Web GUI to match LUCI design
+5c19b5abc [AP-522]:Create new wan configuration page
+f236ccd5d AP-513 AP-506: Fix bug SSID,Password with special charaters + Do not allow special charaters for SSID,Password (space character is allowed in SSID and is not allowed in Password) + Do not allow Vietnamese consonants in SSID and Passwords
+34b8de8fa AP-502:[LOG] Improve module Log (cont) 	+ Fix bug: Generate new log file when old log file exceeds the defined size
+b4437186b AP-450:[Web-Portforwarding] Fix bug validate the same external port
+ffe5d8733 AP-518: Add git version to firmware info(improve)
+6527a2cc5 AP-502:[LOG] Improve module Log (cont)
+c0e7dc995 AP-520: Improve module LOG
+f63b85d1d [AP-452]:Improve WAN page(cont.)-update wan interface status correspond to port wan status. disable config in wan page if there is any not yet applied wan config
+a7e61997b AP-520: Improve module Log
+d065cd40b AP-495: [Mesh] Sometimes, can't mesh via LAN and wifi (1905 is stopped)
+87b02db83 AP-518: Add git version to firmware info
+7e34bc385 [AP-517]:Remove reset factory flag, keep default ssid wifi, pass admin when update fw by boot or scp
+21a349c24 AP-380: [WAN] Lost IP WAN for 5-15 mins when turn off Mesh (cont) - end PADT until receive PADO
+cf1285729 AP-405 [WIFI]: Display incorrect 802.11 mode
+61272c4e3 [AP-409] Change WAN MAC for each interfaces (cont)
+51ada93a8 AP-512: [MESH] Can't sync WiFi configuration to Agent if SSID have space character
+37912f8cf [AP-452]:Verify duplicated VLANID (cont.)
+75e1a3651 AP-316: [WiFi] Can't choose Authentication, Encryption mode when mesh enable
+b7cfb73b9 AP-463: [KCS-T8] Can't mesh via WAN port at Agent
+29d9eba3e AP-398: Check mesh status at agent, wifi reload if lost mesh 300s
+ca406a748 AP-263: Change notice ui web when change password admin
+3eb23374d AP-196: [LOG] Fix bug: Cant download log from web + fix bug lost log file when remove it in data folder (cont)
+6d691c713 AP-497:[Web Bandsteering] Still accept enable Band Steering when SSID1 disable + Fix reload issues + fix bug related to nil value
+d2dd7da65 AP-496:[LOG] Fix bug: Cant download log from web + fix bug lost log file when remove it in data folder
+1a93ce5b1 AP-469: Add test button for MP
+16103668b AP-479:[Uboot] Add Uboot build date into file binary 	+ Purpose: Check uboot version
+904648821 AP-383:[LED] Led manager in AP - Handle Factoy reset func in AP
+922b1a3ed AP-383:[LED] Led manager in AP - Handle WPS for mesh
+7058344fb AP-398: [Mesh] Cant disable mesh at Agent (cont)
+4da2e9158 [AP-284]:Re-create backdoor for upgrade fw
+48d7b9a56 [AP-477]:Fix firewall rules correspond to current Wan default route
+fc6e8a083 Merge branch 'ap-mesh-dev' of ssh://10.55.104.17:22/data/vttek/git/VT-AP2 into ap-mesh-dev
+770e3f742 [AP-409] Change WAN MAC for each interfaces
+7b722a04a [AP-476]:Improve topology page, add hyperlinks to other devices's WebGUI
+47df2083e AP-350: [Upgrade] AP doesn't synchronize the configuration after upgrade firmware
+f0b6b7e82 [AP-436]:Fix bug DHCP - always enable DHCP Server
+c4c701662 [AP-452]:Fix wan page(cont.)
+b5fa36354 AP-320: [Mesh] Break out mesh network when enable/disable band 2.4G (cont)
+f244c9fc2 AP-157: [MESH] Fix bug ctx NULL pointer + Root cause: P1905 start after mapd => can not make connection between mapd and p1905
+487ca78bb AP-335 AP-220: Module log for AP
+c08407185 AP-445 AP-387:[Band Steering] Bandsteering works when enabling Mesh
+0cec4c429 AP-380: [WAN] Lost IP WAN for 5-15 mins when turn off Mesh
+8fa845082 AP-374: [Overview] AP show duplicate DNSv4 server
+946f7b6b5 [AP-452]:Fix WAN page (cont.)
+7a76ec3bc AP-469: Enable telnet for MP
+794fba22c AP-398: [Mesh] Cant disable mesh
+c9943775c AP-320: [Mesh] Break out mesh network when enable/disable band 2.4G
+1ce0999f6 AP-402 AP-318:[WEB] Fix Overview Page + Fix bug AP-318
+323ba5250 AP-403:[Tool] Enable some Debug Tool  + Guide: AP\2.Software\2. TechnicalNote\AP_Build_gdb_and_tool.txt
+8809d9a1c [AP-438]: Validate gateway in same subnet as ipaddr and minor change in LAN status in overview page
+2bc7e80c8 AP-383:[LED] Fix bug LED - Part 2: Handle Lost Mesh case
+c8d0f36f1 [AP-432]:Validate values of HTTP and HTTPS port
+2be763df1 [AP-444][AP-325][AP-421]: Fix various web bugs
+e1c57dba8 [AP-452][AP-399]:Fix wan and lan page, add duplicated VLAN verification
+3d405e64a  AP-451 : Add serialpcb field to sysHwInfo
+daca2cafc AP-449: Check image valid before boot
+c2a1592d3 [AP-447]:Fix upgrading firmware always succeeds
+8f1820d9e [AP-446]:Fix custom DNS notworking on LAN
+95915d14e AP-236: add check length password, can not accept space character
+daf96f0db AP-383:[LED] Fix bug LED - Part 1: Fix some bugs after factory reset in both controller and agent devices 	+ Description: After factory reset, when we change device role of devices, we also need to restart vt_led_manager daemon to adapt with the new change. 	+ Besides, This commit also amends 'uci commit' command for AP-436
+d61d52a26 AP-436:[DHCP] Fix bug DHCP
+d5895af48 AP-410: Hide Other Backhaul Links on Controller (03)
+662057735 AP-410: Fixbug topology for 8 APs (04)
+edf03777d AP-414: Create allinone Boot+OS1+OS2, check FW infomation, change FW partition
+9ffa73e71 AP-410: AP Metrics send to Controller (02)
+2e12795b9 AP-404: Edit AP Capability Report và Client Steering Request 1905 message
+3638b9277 AP-410: Edit hwnat and ipv6 action on mesh network
+fc7c2ba2b AP-404: Edit Link Metrics Response (03)
+31316c922 AP-404:[Mesh] reduce mesh log (02)
+810dc0bfd AP-402:[Web] Fix Overview Page 	+ Fix Wifi Section 	+ Fix Network Section
+667dedba4 [AP-405]:Workaround igmp snooping(flooding igmp report)
+992dc412d [AP-284]:Firmware bd allow firmware of any version
+b1fe1c497 AP-404: [Mesh] Improve topology
+54bf8d2e9 [AP-401]:Fix overview page-unlink ifname to config webpage
+5f0e5803d [AP-401]:Fix various bug in overview page
+2657d2fa6 AP-368: show current OS infomation when switch OS
+f524d673a AP-397 - Change root password and model name
+1f8247a03 AP-358:[LED] Led manager in AP
+a07754723 AP-356:[LED control] add led kernel module and disable old control led wan, led wifi
+bdee78763 [AP-355]:Add default route option to WAN page
+2c705b65e AP-334:[Band Steering]: Band steering does not work properly after factory reset
+64f1f376c AP-201: Keep config after upgrade, remove keep box
+a4a0f4f61 AP-329:[Diagnostics] Agent cant ping/tracert to any website via domain name
+66ccdd917 [AP-128]: Allow to config both bridge and route for WAN
+b827ada4b AP-129 [Device Information] Missing Device Information need to display
+37ca6526a [AP-347] Improve Topology page speed
+07c286368 AP-281 [Mesh] Cant mesh via LAN interface (improve)
+f3e7b6d79 AP-281 [Mesh] Cant mesh via LAN interface (cont.)
+b7d6ea324 AP-281 [Mesh] Cant mesh via LAN interface
+ec07f94ad AP-357 Enable igmp snooping for AP
+788046078 AP-338: Add log for debug mesh
+a4128b0f9 AP-345: Config Roaming RSSI Threshold on UI
+ce14266d2 ONTS-689: [Mesh] Fixbug roaming (part5 edit CUOverloadTh and add log)
+abfa25cad AP-334: Laptop windows, card wifi can't connect via Wi-Fi at Agent
+6e9bdf258 AP-338: Fixbug roaming (part3 fix link metric)
+aae90e739 AP-338: Fixbug roaming (part2 fix update channel and add log)
+45169d256 AP-338: fixbug roaming (part1)
+ee914c2a8 [AP-250][Web]:Cant login to AP web after enable/disable SSID
+d91c79c8c [AP-333]: Fix apply LAN page fail when DHCPv4 is disabled
+6a55940ec [AP-328]: Fix WAN AP loses IPv6
+abbb82054 AP-332 Fix special character in password
+da1b5adab AP-331 SSID is set to default after reboot
+b976f903a [AP-309]:Handle XXS vulnerabilities
+29fd2d00e AP-330 [Topology] Topology page does not show Ethernet client
+01ff4e61d AP-214 Fix AP Web UI
+520e3ebfb AP-308 Backup and Restore Config
+4731993f6 AP-313: [Mesh] Client gets kicked out of wifi continuously
+130a7994c AP-216: Handle enable ssid base controller configuaration (cont)
+902948d84 AP-319:[Bandsteering] Fix wrong file config
+6537827ff AP-263 Fix accept weak password admin
+4e39711b4 AP-321 Switch OS and keep setting when switch or upgrade
+6694e8fb4 AP-319:[Band Steering] Band steering feature
+d6010ce9c AP-312 Disable console when boot
+7068d718a AP-312 Disable console when boot
+5c3a91ffd [AP-311]: Edit connected devices(cont.t)
+e1d9c22c9 [AP-311]: Edit Connected Devices Page(cont.)
+31095af6a [AP-311]: Fix push wrong file
+9ad090d85 [AP-311]: Edit Connected Devices Page
+739340103 Comment out code handling escape characters
+d6e569540 [AP-300]: Upgrade uhttpd to newer version
+c73d34f4a [AP-309]: Workaround on XSS vulnerabilities
+fda947807 AP-79 Support Dual Boot (change firmware after upgrade)
+acd2ecb3f AP-79 Support Dual Boot (must flash new bootloader after this commit)
+3077bb630 AP-308 backup and restore config
+bc66e1940 AP-229: [Mesh] Some problem of Agent after disable mesh
+36dcab539 AP-305: Wifi 5G automatically changing channel
+b3495be06 AP-307: Improve mesh network
+f77f61dba [AP-283]:Fix AP can't add NAT rule after applying network config(cont.)
+04f0caf10 AP-219 set and get hardware info
+8b6e2300c AP-240[Wifi]:Fix bug Wifi interface still enabled after disabling entire band
+3ee23c5e8 AP-304 AP-259: Fix bug: No validation DHCPv4 in LAN cfg and Logout to wrong page
+46919804b AP-300 Build AP on Docker (cont)
+327f6f31c AP-293:[SPI-FW] Fix bug: apply firewall without delay
+62550da1b [AP-305]: Fix Wifi 5G get channel automatically
+0a6155cb9 AP-300 Build AP on Docker
+3daf67657 AP-282: [Mesh] Controller cant mesh with Agent when it has 2 backhaul MAC
+962a0f525 AP-219 Set and get hardware info
+61ef0c79d AP-288 Web UI: Model and Firmware version
+e709d4aa7 AP-286:[Web-UI] Update SSID and IP in Overview page of AP Agent's Web Page after joining MAP network (fix merge conflict)
+7f33d33e6 AP-286:[Web-UI]: Update SSID and IP in Overview Page of AP Agent's Web Page after joining MAP network
+a9a775a92 AP-287: [WiFi] change to iPAiLNA for default calib wifi
+5c57c635d AP-214 CPU infomation
+0a55efc56 [AP-284]:Fix missing close file function
+a1866c184 [AP-284][AP BD]: Fix wrong default value
+35e1a9d83 [AP-284]:Create simple AP backdoor. Add backdoor allowing to flash equal firmware version
+34ee451f0 [AP-283]:Fix AP can't add NAT rule after applying network config
+ba69affe4 Fix Hide Web Console page
+313eb4d5a AP-276 Change flag reset factory address
+c37c23562 AP-277:[SPI-FW] Enable SPI Firewall
+53159e7bf AP-251 Multiple WAN service for AP (cont 2)
+4da343f03 AP-276 - Change flag reset factory address
+4e00f978a [AP-217]:Fix WAN page can't set IPv6 config
+4bed9049e [AP-275]: Add access management
+12788a3cb [AP-218]:Fix sometime Config Channel is disabled + Hide WebConsole + set additional default config for WAN IPv6
+675494c36 AP-272: [WiFi] Fix calib wifi and add log mesh
+18f97de28 AP-251 Multiple WAN service for AP (cont)
+2534c31ef AP-236 Check new password user, AP-225 Close console depend on state value
+4fa040266 AP-214 Fix CPU infomation, AP-263 Apply:No notice about pass when pass is empty, AP-246 Fix password follow serialnumber
+03987dd40 AP-274 Do not show IP address of AP in topology page
+a8b472c23 AP-272: [Mesh] Fix kernel panic hw-nat when onboarding mesh via wifi
+0ef2749c6 AP-251 Multiple WAN service for AP (fix merge error)
+76b109a2c AP-251 Multiple WAN service for AP
+4a8a5895e AP-197 Reduce number of http request to server to improve performance
+f087f3718 [AP-268]:Remove DHCPv6 Leases and IPv6 Neighbors table
+0b598d7a6 AP-231: [Mesh] Sometimes, cant mesh via WPS button
+e468d9ec6 [AP-218] Edit EasyMesh Page(cont.)
+f0dd9af4e AP-263 Check, change new password
+24e06bd8e [AP-195][AP-217]: Edit Wifi Config Page and WAN Page
+27b2ab419 AP-252 Fix allinone spi boot
+f97b73e4a AP-246 set password admin user
+8e932ab9b AP-154 Get config reset
+ad1cffe77 AP-226: [HWNAT] Enable by default hwnat feature
+55a66bb68 AP-225 Close ssh port depend on statevalue
+24e68c6d5 AP-214 Fix AP Web UI: CPU and RAM infomation
+4b517554e AP-224: [Config] Change config WPS and pool DHCP
+7b61e9edf AP-223: Change format SSID4 of 5G
+22e3c6024 AP-223: Choose Auto Channel Mode and change WSC WiFi parametter
+5652f9bca AP-220:[LOG] Enhancement of Module Log (cont) -using quilt
+12b69246b Remove ra3 interface from configuration page
+9ae0ad3d0 AP-221: Set mac WiFi follow AP-218 (mode read wifi parameter from flash)
+f53f83a65 AP-222 - Push WPS button to start onboarding
+22ba11b40 [AP-158]: Remove unnecessary code block
+b7909e69e AP-216 Handle enable ssid base controller configuaration (on controller web)
+26ab86a64 AP-220:[LOG] Enhancement of Log Module (cont) (fix wrong config)
+c693e710e AP-220:[LOG] Enhancement of module log
+f4ccacc22 [AP-195][AP-181]: Do not allow to config LAN, WAN, WiFI when mesh role is agent + fix bug: upgrade firmware of equal version from web
+a136ad252 AP-219 set and get hardware info
+e64562de6 [AP-217]: Edit WAN Configuration Page(cont.)
+ec320c332 AP-218: Edit easy_mesh page and reconfig mesh
+75c8d3610 [AP-195][AP-217]: Edit Wifi, LAN, WAN configuration page
+a7a6dedeb AP-216: Edit bss config of ap
+328fd8dd7 AP-216: Handle enable ssid base controller configuaration (cont)
+8b0b5d43c AP-183 New topology page (cont. 2)
+55e8f06e9 AP-183 New topology page (cont)
+a51f7d4ac AP-216: Handle enable ssid base controller configuaration
+4612ce7b5 AP-215:[WebUI] Fix AP Web UI: Firewall and add new page: PortForwarding and DMZ
+f2288ff5a [AP-214] Fix AP Web UI
+e36b2bb13 AP-204: Edit ap autoconfig search, response, WSC M1 M2
+d758b70e5 AP-198: Edit radio_identifier and some TLVs
+58464f197 AP-183 AP-197 New topology page and request https request
+8aea4bdbf [AP-195]: Edit WiFi Configuration Page
+e1184247b AP-182: Change IP br-lan to 192.168.2.1 and add make menuconfig
+69bc8d2b3 AP-168 [WIFI] Sometime: AP is reboot and reset WiFi name when changing channel
+09c3e3d9d AP-158 [Mesh] Button "Load default settings" doesnt work as expected
+f3bdd93ed AP-147 AP-156 AP-164 Merge wifi config and mesh config
+90f461f64 [AP-181]: Add version to firmware header
+6950405ec AP-159 [Mesh] Doesnt auto switch to WiFi connection after disconnecting LAN
+3468c1238 repair bootloader
+25c53d1e2 [AP-152]: Edit Network Pages
+9b7b39206 AP-154 Get config reset
+8b7ad616f AP-154 Get config reset
+7300795c2 AP-155 Crash wifi
+3cf3608c5 AP-154 Get config reset
+a48499886 AP-142 [Wifi] Enable/Disable wifi getting error Device unreachable
+a26129004 [AP-140]: PPPoE keep alive - fix bugs and change PPPoE default config
+0e985a79c [AP-140]: PPPoE keep alive - remove unnecessary files
+d00a3ef82 [AP-140]: PPPoE keep alive for AP - change PADI timeout
+3c3b11948 AP-90 Change LAN/WAN port definition
+889ec6865 AP-141 [Wifi] Funtion WPS did not working
+9f3694380 AP-132 Turn on debug
+3226147fe AP-139 Led wifi config
+12c29e544 AP-138 Driver Led control
+243bb74c3 edit network page to config wan protocol
+943772cb0 AP-137 Can't mesh through lan port 4
+a2de1aeef AP-94 Calib wifi
+dbd2c8026 AP-136 Control button
+4b7d93f3e AP-135 App Led control
+cb4d74508 AP-132 Turn on debug (limit log size)
+5bd7593a4 AP-133 Add Enable SSID configuration
+6e9d23dc5 AP-132 Turn on debug (nixio.syslog); AP-94 New Calib 072221; AP-73 ReConfig wifi vs Mesh
+f0f7c3abf AP-132 Turn on debug (1905)
+3e203a69c AP-132 Turn on debug (wappd)
+f28834c2b AP-132 Turn on debug (mapd and ui_map)
+92646f076 AP-93 Port Mesh 210806
+26fcefd5a AP-120 Default security
+1d0cf0e2b AP-78 Viettel theme for AP (apps and system)
+36e90c7d6 AP-119 Change appearance of Wireless Pages
+256647995 AP-105 [Mesh] Faulty connection for wifi 2G, ask for authentication many times before connecting success
+a6e9c0db2 AP-116 Uncompress linux-3.10 (using quilt)
+314c12c2f AP-78 Viettel theme for AP (Network)
+504d6e87d AP-118 Error operation_class on 5G band when onboading
+c6e44fa06 AP-115 HTTPS for web AP (continue)
+e4de522d8 AP-117 Change System Pages
+b1fe98a6c AP-91 Change partition NAND definition in firmware
+fba8b8728 AP-94 Calib wifi
+52a16dc7c AP-116 Uncompress linux-3.10 (cont)
+f4a751b82 AP-116 Uncompress linux-3.10
+26166d14a AP-115 HTTPS for web AP
+840fc4efe AP-109 [Login] Login success with any keywords for password field
+daedbaf9b AP-96 Change MAC WLan
+6857c30d4 AP-31: Add firewall for AP: IP Filter, MAC Filter, Traffic rule
+8b6962ccf AP-114 Add new entry into Device information
+6471d818f AP-96 Change MAC WLan
+c6e31a651 AP-96 Change MAC WLan
+e5b49a136 AP-81 Porting Status pages to Viettel Theme
+ae6011150 AP-95 Bootloader for NAND flash
+3b52bf02f AP-93 Port Mesh 7615D 210608
+a8416432f AP-93 Port Mesh 7615D 210608
+cc5a33a53 AP-92 Defconfig some configurations
+790320c2a AP-14 LAN/WAN Mac address is incorrect
+ce1b344f1 AP-63 IP wan is lost
+d8c64fb76 AP-90 Change LAN/WAN port definition
+80688f47e AP-9 Change IP interface br-lan, cannot access webUI (sometimes)
+63dbca687 AP-9: Change IP interface br-lan, cannot access webUI (sometimes)(untar package)
+a8040add2 AP-9: Change IP interface br-lan, cannot access webUI (sometimes)(untar package)
+d79d521b5 AP-4 [Web_UI]Web can't logout automatically
+4de6c096c AP-78 Viettel theme for AP
+045506db1 AP-80 : Edit Network page
+b48450705 AP-77 Create Topology page
+105b64961 AP-76 Create Connected Devices page
+c1b303979 ONT-73 Edit Wireless web page
+f0ea8863f AP-47 Firmware does not have signature, AP-72 Implement checking version firmware (remove comment)
+f3cbd71cd AP-47 Firmware does not have signature, AP-72 Implement checking version firmware
+fbeee7342 AP-75 [UI] Change Basic UI
+1b1a3f66e AP-74 Build FW all-in-one p3
+66e63a138 Add luci-app-mtk
+42bfd0485 AP-74 Build FW all-in-one p2
+aeebe829d AP-74 Build FW all-in-one p1
+52854a983 Initial commit SDK AP-7621-7615D
+37b84efe3 Initial commit SDK_QUEUE33944904
+a4da6a2d1 Initial commit SDK-QUEUE33944904

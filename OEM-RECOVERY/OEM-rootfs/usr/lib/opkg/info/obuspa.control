@@ -1,0 +1,10 @@
+Package: obuspa
+Version: 6.0.0-1
+Depends: libc, libpthread, librt, libopenssl, zlib, libcurl, libsqlite3, libmosquitto
+Source: package/network/services/obuspa
+License: BSD-2.0
+LicenseFiles: LICENSE.txt
+Section: net
+Architecture: ramips_24kec
+Installed-Size: 231637
+Description:  Open Broadband-User Services Platform-Agent (OB-USP-Agent) is an open source project that is focused on creating a reference implementation of the User Services Platform (USP) [specification](https://usp.technology) from an "Agent" perspective

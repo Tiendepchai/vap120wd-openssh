@@ -1,0 +1,24 @@
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file does nothing.
+
+# enable watchdog
+/usr/bin/watchdog &
+
+# ping daemon
+vt_ping &
+
+# led daemon
+led_manager &
+
+# check mesh status at Agent
+sh /etc/vt_check_mesh_agent.sh &
+
+#log reboot reason
+sh /etc/vt_log_reboot_reason.sh &
+
+# check device hang
+sh /etc/vt_device_hang.sh &
+
+#start tms client
+#source /lib/obuspa/obuspa_common.sh
+#delay_start_obuspa

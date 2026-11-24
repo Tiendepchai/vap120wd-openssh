@@ -1,0 +1,13 @@
+/etc/init.d/obuspa
+/usr/bin/obuspa
+/etc/config/obuspa
+/lib/obuspa/obuspa_common.sh
+/usr/bin/lock/lock_action.sh
+/lib/obuspa/obuspa_check_hang.sh
+/lib/obuspa/test_start_stop.sh
+/usr/lib/lua/vt_json.lua
+/usr/lib/lua/validJson.lua
+/etc/config/device
+/etc/init.d/obuspacheckhang
+/usr/bin/lock/generate_lock_config.sh
+/usr/etc/obuspa_factory_reset_template.txt

@@ -1,0 +1,2 @@
+config deviceinfo 'deviceinfo'
+    option devicename 'AP'

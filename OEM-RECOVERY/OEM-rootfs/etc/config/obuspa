@@ -1,0 +1,16 @@
+config log 'log'
+    option level '2'
+    option output 'syslog'
+	option prototrace 'false'
+
+config mqtt 'mqtt'
+	option enable 'true'
+	option broker_address 'homewifi3.viettel.vn'
+	option broker_port '8883'
+	option username 'vht-tms-agent'
+	option password 'YCLR7dh7)&e^9$5Z'
+	option transport_protocol 'TLS'
+
+config bulkdata 'bulkdata'
+	option enable 'true'
+	option url 'http://homewifi3.viettel.vn:80/bulkdata'

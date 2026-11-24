@@ -1,0 +1,8 @@
+Package: mt7615-scripts
+Version: gerrit
+Depends: libc, mtk-base-files
+Source: package/mtk/drivers/mt7615
+Section: opt
+Architecture: ramips_24kec
+Installed-Size: 8924
+Description:  mt7615 scripts

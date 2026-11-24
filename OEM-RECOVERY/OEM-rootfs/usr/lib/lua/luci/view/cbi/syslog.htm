@@ -1,0 +1,15 @@
+<%+cbi/valueheader%>
+<%local syslog=luci.util.exec("cat /tmp/log/messages")%>
+<%  if self.log_type == "wifilog" then syslog=luci.util.exec("cat /tmp/log/wifilog")
+    elseif self.log_type == "meshlog" then syslog=luci.util.exec("cat /tmp/log/logmesh") end%>
+    <script type="text/javascript">
+
+        // function download() {
+        //     window.location.href = "<%=luci.dispatcher.build_url("admin", "system", "syslog_download")%>"
+        // }
+    </script>
+    <textarea readonly="readonly" class="log_view" wrap="off" rows="<%=syslog:cmatch("\n")+2%>"><%=syslog:pcdata()%></textarea>
+    <br>
+    <br>
+    <!-- <input type="button" class="cbi-button cbi-button-find" value="<%:Download%>" onclick="return download()"> -->
+<%+cbi/valuefooter%>

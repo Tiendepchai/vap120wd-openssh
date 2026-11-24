@@ -1,0 +1,42 @@
+#!/bin/sh
+
+[ -d "/etc/board.d/" -a ! -s "/etc/board.json" ] && {
+	for a in `ls /etc/board.d/*`; do
+		[ -x $a ] || continue;
+		$(. $a)
+	done
+}
+
+[ -s "/etc/board.json" ] || return 1
+[ -s "/etc/nw_agent_config/network" ] || {
+	mkdir -p /etc/nw_agent_config
+	touch /etc/nw_agent_config/network
+	/bin/config_generate agent
+}
+
+[ -s "/etc/nw_ctrl_config/network" ] || {
+	mkdir -p /etc/nw_ctrl_config
+	touch /etc/nw_ctrl_config/network
+	/bin/config_generate controller
+}
+
+[ -f "/usr/bin/lock/generate_lock_config.sh" ] && {
+	[ -s "/etc/lock_config/network" ] || {
+		mkdir -p /etc/lock_config
+		touch /etc/lock_config/network
+		/usr/bin/lock/generate_lock_config.sh
+	}
+}
+
+map_enable=$(wificonf -f /etc/mapd_cfg.txt get MapEnable)
+dev_role=$(wificonf -f /etc/mapd_cfg.txt get DeviceRole)
+lock_status=$(cof_cli read LockStatus)
+if [ "$map_enable" = "1" -a "$dev_role" = "2" ];then
+	if [ -f "/usr/bin/lock/generate_lock_config.sh" -a "$lock_status" = "1" ];then
+		ln -sf /etc/lock_config/network /etc/config/network
+	else
+		ln -sf /etc/nw_agent_config/network /etc/config/network
+	fi
+else
+    ln -sf /etc/nw_ctrl_config/network /etc/config/network
+fi

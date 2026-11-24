@@ -1,0 +1,6 @@
+/usr/lib/lua/luci/view/portforward/cbi_addforward.htm
+/usr/lib/lua/luci/view/portforward/firewall_disable.htm
+/usr/lib/lua/luci/view/portforward/portforward.htm
+/usr/lib/lua/luci/controller/portforward.lua
+/usr/lib/lua/luci/model/cbi/portforward/forward-details.lua
+/usr/lib/lua/luci/model/cbi/portforward/forwards.lua

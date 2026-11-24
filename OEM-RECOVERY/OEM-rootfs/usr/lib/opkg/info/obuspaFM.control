@@ -1,0 +1,8 @@
+Package: obuspaFM
+Version: 1.0-202304
+Depends: libc, libubox, libuci, libubus, libiwinfo, libblobmsg-json, libpthread
+Source: package/viettel/obuspaFM
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 10842
+Description:  Viettel FM_obuspa_scan process

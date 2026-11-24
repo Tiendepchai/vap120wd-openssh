@@ -1,0 +1,112 @@
+<%#
+    File name : mtk_wifi_loading.htm
+    This file is used in WebUI based on LuCI to handle the loading event.
+%>
+<%+header%>
+<%
+local disp = require "luci.dispatcher"
+local request = disp.context.request
+local url = request[5]
+%>
+<h2><a>Applying Settings</a></h2>
+<div class="alert-message" id="BusyMsg">
+    <img src="<%=resource%>/icons/loading.gif" alt="" style="vertical-align:middle" />
+    <big><strong>Please wait while the settings are being applied.</strong></big>
+</div>
+<div class="alert-message error" id="TimeoutMsgDiv" style="display:none">
+    <big><strong id="TimeoutMsg">Device is taking too much time to apply the settings!</strong></big>
+</div>
+
+<script type="text/javascript">
+    function visit_url(url)
+    {
+        window.onbeforeunload = function() {};
+            location = url;
+    }
+
+    function get_apply_status_cb(rsp, remNumTries)
+    {
+        try{
+            var r = JSON.parse(rsp);
+            if(r.status == "DONE"){
+                visit_url('<%=return_url%>');
+                return;
+            }
+        }
+        catch(e){}
+        finally{
+            remNumTries -= 1;
+            if(remNumTries > 0){
+                window.setTimeout(get_apply_status, 5000, remNumTries);
+            }
+            else{
+                show_header();
+                document.getElementById("TimeoutMsgDiv").style.display = '';
+                document.getElementById("BusyMsg").style.display = 'none';
+            }
+        }
+    }
+
+    function get_apply_status(remNumTries)
+    {
+        XHR.get('<%=status_url%>', null, 
+            function(x)
+            {
+                try
+                {
+                    console.log(x);
+                    get_apply_status_cb(x.response, remNumTries);
+                }
+                catch(e)
+                {
+                    console.log(e);
+                    console.log("get_apply_status error!")
+                }
+            }
+        );
+    }
+
+    function show_header()
+    {
+         document.getElementsByTagName("HEADER")[0].style.display = "block";
+         $("#maincontent").css("margin-left","");
+         $(".page-footer").css("margin-left","");
+    }
+
+    function hide_header()
+    {
+         document.getElementsByTagName("HEADER")[0].style.display = "none";
+         $("#maincontent").css("margin-left","0");
+         $(".page-footer").css("margin-left","0");
+    }
+
+    function send_loading_page_ready()
+    {
+        (new XHR()).post('<%=apply_url%>', {"page_status":"READY"}, function(x) {
+            try
+            {
+                console.log(x)
+                var r = JSON.parse(x.response);
+                if (r.status == "READY")
+                    window.setTimeout(get_apply_status, 5000, 180);
+            }
+            catch(e)
+            {
+                console.log(e);
+                console.log("send_loading_page_ready error!")
+                // window.setTimeout(send_loading_page_ready, 2000);
+            }
+        });
+    }
+
+    window.onload = function(){
+        hide_header();
+        send_loading_page_ready();
+    }
+
+    window.onbeforeunload = function(evt) {
+        evt.returnValue = "Saved data have not been applied yet! Are you sure?";
+        return evt.returnValue;
+    }
+</script>
+<%+footer%>

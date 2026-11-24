@@ -1,0 +1,284 @@
+<%+header%>
+<!--
+    This module is a demo to configure MTK' proprietary WiFi driver.
+    Basic idea is to bypass uci and edit wireless profile (mt76xx.dat) directly.
+    LuCI's WiFi configuration is more logical and elegent, but it's quite tricky to 
+    translate uci into MTK's WiFi profile (like we did in "uci2dat").
+
+    Hua Shao <nossiac@163.com>
+-->
+<%
+devname1 = "MT7615D.1.2"
+vifname1 = "rax0"
+devname5 = "MT7615D.1.1"
+vifname5 = "ra0"
+devnameall = "all"
+
+require "luci.tools.webadmin"
+local ip = require "luci.ip"
+
+local device_role = luci.util.exec_trim("wificonf -f /etc/mapd_cfg.txt get DeviceRole")
+local mesh_enable = luci.util.exec_trim("wificonf -f /etc/mapd_cfg.txt get MapEnable")
+-%>
+
+<script src="/luci-static/resources/monCon.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+<script type="text/javascript">
+
+function toggle_tab(name){
+
+    tab_wifi = document.getElementById("vif-cfg-tab-wifi");
+    tab_arp = document.getElementById("vif-cfg-tab-neighbour7");
+
+    if(name == "wifi"){
+        tab_wifi.className = "vt-tab";
+        if ( tab_arp != null)
+            tab_arp.className = "vt-tab-disabled";
+
+        $("#wifi-station").show();
+        if ( tab_arp != null)
+            $("#vif-cfg-neighbour7").hide();
+
+    }
+    else if(name == "arp"){
+        tab_wifi.className = "vt-tab-disabled";
+        tab_arp.className = "vt-tab";
+
+        $("#wifi-station").hide();
+        $("#vif-cfg-neighbour7").show();
+    }
+}
+function hi(to)
+{    
+    toggle_tab("wifi");
+    XHR.halt();
+    InitStaList(to);
+}
+</script>
+
+<form method="post" name="cbi" enctype="multipart/form-data">
+
+    <h2>Connected Devices</h2><br>
+    <ul class="cbi-tabmenu">
+        <li class="vt-tab" id="vif-cfg-tab-wifi">
+            <a href="javascript:toggle_tab('wifi');this.blur(); ">Wireless</a>
+        </li>
+        <% if mesh_enable == "0" or (mesh_enable == "1" and device_role == "1") then%>
+        <li class="vt-tab-disabled" id="vif-cfg-tab-neighbour7">
+            <a href="javascript:toggle_tab('arp');this.blur(); ">Neighbours</a>
+        </li>
+        <%end%>
+    </ul>
+        <div id="wifi-station">
+            <fieldset class="cbi-section">
+                <div>
+                    <legend style="margin-bottom: 1%; margin-top: -2%">Wi-Fi 2.4Ghz</legend>
+                    <div class="table-responsive">
+                        <table class="cbi-section-table" id="vif-cfg-station1" name="vif-cfg-station1" width="600" border="1" cellpadding="2" cellspacing="1">
+                            <tr class="table-head">
+                                <td>Index</td>
+                                <td>SSID</td>
+                                <td id="stalistMacAddr">MAC Addr</td>
+                                <% if mesh_enable == "0" or (mesh_enable == "1" and device_role == "1") then%>
+                                <td>IP Addr</td>
+                                <%end%>
+                                <td>RSSI<br>(dBm)</td>
+                                <td>Data rate<br>(Mbps)</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <legend style="margin-bottom: 1%; margin-top: -2%">Wi-Fi 5Ghz</legend>
+                    <div class="table-responsive">
+                        <table class="cbi-section-table" id="vif-cfg-station5" name="vif-cfg-station5" width="600" border="1" cellpadding="2" cellspacing="1" style="">
+                            <tr class="table-head">
+                                <td>Index</td>
+                                <td>SSID</td>
+                                <td id="stalistMacAddr">MAC Addr</td>
+                                <% if mesh_enable == "0" or (mesh_enable == "1" and device_role == "1") then%>
+                                <td>IP Addr</td>
+                                <%end%>
+                                <td>RSSI<br>(dBm)</td>
+                                <td>Data rate<br>(Mbps)</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+            </fieldset>
+
+        </div>
+
+        <% if mesh_enable == "0" or (mesh_enable == "1" and device_role == "1") then%>
+        <div id="vif-cfg-neighbour7" style="display: none;">
+            <fieldset class="cbi-section">
+            <legend>ARP</legend>
+            <div class="cbi-section-node table-responsive">
+                <table class="cbi-section-table">
+                    <tr class="cbi-section-table-titles table-head">
+                        <th class="cbi-section-table-cell"><%:IPv4 Address%></th>
+                        <th class="cbi-section-table-cell"><%:MAC Address%></th>
+                        <th class="cbi-section-table-cell"><%:Interface%></th>
+                    </tr>
+
+                    <%
+                        for _, v in ipairs(ip.neighbors({ family = 4 })) do
+                            if v.mac then
+                    %>
+                    <tr class="cbi-section-table-row cbi-rowstyle-<%=(style and 1 or 2)%>">
+                        <td class="cbi-value-field"><%=v.dest%></td>
+                        <td class="cbi-value-field"><%=v.mac%></td>
+                        <td class="cbi-value-field"><%=v.dev%></td>
+                    </tr>
+                    <%
+                                style = not style
+                            end
+                        end
+                    %>
+                </table>
+            </div>
+            </fieldset>
+        </div>
+        <%end%>
+</form>
+
+<script type="text/javascript">
+
+    var sta_list;
+
+    /* Functions used for updating Stations tab must be written inside this check. */
+    function clean_stalist_table(index)
+    {
+        if(index == 0){
+            var table1 = document.getElementById('vif-cfg-station1');
+            while(table1.rows.length > 1)
+                table1.deleteRow(-1);
+
+            var table5 = document.getElementById('vif-cfg-station5');
+            while(table5.rows.length > 1)
+                table5.deleteRow(-1);
+        }
+        else{
+            var table = document.getElementById('vif-cfg-station'+index);
+            while(table.rows.length > 1)
+                table.deleteRow(-1);
+        }
+
+    }
+
+    function insert_stalist_table(index)
+    {
+        var i, tr_row, td_cell;
+        var tableid1 = document.getElementById('vif-cfg-station1');
+        var tableid5 = document.getElementById('vif-cfg-station5');
+
+        var idx1 = 0, idx5 = 0;
+        for (i = 0; sta_list[i] ; i++){
+            console.log(sta_list[i]);
+            if( sta_list[i].index == "1"){
+                
+                tr_row = tableid1.insertRow(-1);
+                // show index
+                td_cell = tr_row.insertCell(-1);
+                td_cell.innerHTML = ++idx1;
+                console.log(idx1);
+                // show SSID
+                td_cell = tr_row.insertCell(-1);
+                td_cell.innerHTML = sta_list[i].SSID;
+                // show MAC
+                td_cell = tr_row.insertCell(-1);
+                td_cell.innerHTML = sta_list[i].MacAddr;
+
+                <% if mesh_enable == "0" or (mesh_enable == "1" and device_role == "1") then%>
+                // show IP addr
+                td_cell = tr_row.insertCell(-1);
+                td_cell.innerHTML = sta_list[i].IPAddr;
+                <%end%>
+                // show rssi
+                td_cell = tr_row.insertCell(-1);
+                let rssi = Math.max(parseInt(sta_list[i].AvgRssi0), parseInt(sta_list[i].AvgRssi1), parseInt(sta_list[i].AvgRssi2))
+                td_cell.innerHTML = rssi;
+
+                // show datarate
+                td_cell = tr_row.insertCell(-1);
+                td_cell.innerHTML = sta_list[i].DataRate;
+            }
+
+            else if( sta_list[i].index == "5"){
+                tr_row = tableid5.insertRow(-1);
+                // show index
+                td_cell = tr_row.insertCell(-1);
+                td_cell.innerHTML = ++idx5;
+                console.log(idx5);
+                // show SSID
+                td_cell = tr_row.insertCell(-1);
+                td_cell.innerHTML = sta_list[i].SSID;
+                // show MAC
+                td_cell = tr_row.insertCell(-1);
+                td_cell.innerHTML = sta_list[i].MacAddr;
+
+                <% if mesh_enable == "0" or (mesh_enable == "1" and device_role == "1") then%>
+                // show IP addr
+                td_cell = tr_row.insertCell(-1);
+                td_cell.innerHTML = sta_list[i].IPAddr;
+                <%end%>
+                // show rssi
+                td_cell = tr_row.insertCell(-1);
+                let rssi = Math.max(parseInt(sta_list[i].AvgRssi0), parseInt(sta_list[i].AvgRssi1), parseInt(sta_list[i].AvgRssi2))
+                td_cell.innerHTML = rssi;
+
+                // show datarate
+                td_cell = tr_row.insertCell(-1);
+                td_cell.innerHTML = sta_list[i].DataRate;
+            }
+        }
+
+        if (tableid1.rows.length == 1) {
+            tr_row = tableid1.insertRow(-1);
+            td_cell = tr_row.insertCell(-1);
+            td_cell.colSpan = 11;
+            td_cell.innerHTML = "<%:No device connected to current interface%>"
+        }
+        if (tableid5.rows.length == 1) {
+            tr_row = tableid5.insertRow(-1);
+            td_cell = tr_row.insertCell(-1);
+            td_cell.colSpan = 11;
+            td_cell.innerHTML = "<%:No device connected to current interface%>"
+        }
+    }
+
+    function InitStaList_cb(response, index)
+    {
+        sta_list = response;
+        clean_stalist_table(index);
+        insert_stalist_table(index);
+    }
+
+    function InitStaList(to)
+    {
+        if (to =="all")
+            XHR.poll(5, "<%=luci.dispatcher.build_url("admin",  "mtk",  "wifi",  "sta_info")%>/" + '<%=vifname1%>' + '/' + '<%=devnameall%>', null, 
+                function(x)
+                {
+                    try{
+                        var response = JSON.parse(x.response);
+                        var index = 0;
+                        console.log("Station List: %o", response);
+                        InitStaList_cb(response, index);
+                    }
+                    catch(e){}
+                }
+            );
+    }
+
+    window.onload = function(){
+        //AP-504
+        if (window.location.href.indexOf("stok") > 0)
+            setupTimers();
+        hi("all");
+    }
+
+</script>
+<%+footer%>

@@ -1,0 +1,8 @@
+Package: libmapd
+Version: 1
+Depends: libc, libllcfg, 1905daemon
+Source: package/mtk/applications/libmapd
+Section: libs
+Architecture: ramips_24kec
+Installed-Size: 10215
+Description:  mtk mapd library

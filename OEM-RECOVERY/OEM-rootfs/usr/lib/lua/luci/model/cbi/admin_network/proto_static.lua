@@ -1,0 +1,87 @@
+-- Copyright 2011 Jo-Philipp Wich <jow@openwrt.org>
+-- Licensed to the public under the Apache License 2.0.
+local map, section, net = ...
+local ifc = net:get_interface()
+local ipaddr, netmask, gateway, broadcast, dns, accept_ra, send_rs, ip6addr,
+      ip6gw
+local mtu, metric
+
+local ipv6_ops = false
+
+if net:name() ~= "lan" then
+    ds_ip4 = section:option(DummyValue, "_dummy_IPv4", translate("Static IPv4 Config"))
+end
+
+ipaddr = section:option(Value, "ipaddr", translate("IPv4 address"))
+ipaddr.datatype = "ip4addr"
+
+netmask = section:option(Value, "netmask", translate("IPv4 netmask"))
+netmask.datatype = "ip4addr"
+netmask:value("255.255.255.0")
+netmask:value("255.255.0.0")
+netmask:value("255.0.0.0")
+
+
+if net:name() ~= "lan" then
+    dns = section:option(DynamicList, "dns", translate("Use custom DNS servers"))
+    dns.datatype = "ipaddr"
+    dns.cast = "string"
+
+    gateway = section:option(Value, "gateway", translate("IPv4 gateway"))
+    gateway.datatype = "ip4addr"
+end
+
+-- AP-80
+-- broadcast = section:taboption(ip_tab, Value, "broadcast", translate("IPv4 broadcast"))
+-- broadcast.datatype = "ip4addr"
+-- AP-80 end
+if ipv6_ops then
+    if luci.model.network:has_ipv6() then
+
+        local ip6assign = section:taboption("ipv6", Value, "ip6assign",
+                                            translate("IPv6 assignment length"),
+                                            translate(
+                                                "Assign a part of given length of every public IPv6-prefix to this interface"))
+        ip6assign:value("", translate("disabled"))
+        ip6assign:value("64")
+        ip6assign.datatype = "max(64)"
+        -- AP-80
+        -- local ip6hint = section:taboption("ipv6", Value, "ip6hint", translate("IPv6 assignment hint"),
+        -- 	translate("Assign prefix parts using this hexadecimal subprefix ID for this interface."))
+        -- for i=33,64 do ip6hint:depends("ip6assign", i) end
+        -- AP-80 end
+        ip6addr = section:taboption("ipv6", Value, "ip6addr",
+                                    translate("IPv6 address"))
+        ip6addr.datatype = "ip6addr"
+        ip6addr:depends("ip6assign", "")
+
+        ip6gw = section:taboption("ipv6", Value, "ip6gw",
+                                  translate("IPv6 gateway"))
+        ip6gw.datatype = "ip6addr"
+        ip6gw:depends("ip6assign", "")
+
+        local ip6prefix = section:taboption("ipv6", Value, "ip6prefix",
+                                      translate("IPv6 routed prefix"),
+                                      translate(
+                                          "Public prefix routed to this device for distribution to clients."))
+        ip6prefix.datatype = "ip6addr"
+        ip6prefix:depends("ip6assign", "")
+
+    end
+end
+-- AP-80
+if (section:has_tab("advanced")) then
+    luci.tools.proto
+        .opt_macaddr(section, ifc, translate("Override MAC address"))
+
+    mtu = section:taboption("advanced", Value, "mtu", translate("Override MTU"))
+    mtu.placeholder = "1500"
+    mtu.datatype = "max(9200)"
+
+    metric = section:taboption("advanced", Value, "metric",
+                               translate("Use gateway metric"))
+
+    metric.placeholder = "0"
+    metric.datatype = "uinteger"
+end
+-- AP-80 end

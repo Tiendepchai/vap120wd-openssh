@@ -1,0 +1,11 @@
+Package: lighttpd-mod-auth
+Version: 1.4.55-1
+Depends: libc, lighttpd
+Source: package/network/services/lighttpd
+License: BSD-3-Clause
+LicenseFiles: COPYING
+Section: net
+Maintainer: W. Michael Petullo <mike@flyn.org>
+Architecture: ramips_24kec
+Installed-Size: 9145
+Description:  Authentication module

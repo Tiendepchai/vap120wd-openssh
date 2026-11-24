@@ -1,0 +1,8 @@
+Package: mtkiappd
+Version: 1
+Depends: libc, libpthread, librt
+Source: package/mtk/applications/mtkiappd
+Section: MTK Properties
+Architecture: ramips_24kec
+Installed-Size: 10463
+Description:  ATE Daemon

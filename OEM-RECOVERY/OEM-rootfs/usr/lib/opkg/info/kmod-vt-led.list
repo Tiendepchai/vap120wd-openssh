@@ -1,0 +1,3 @@
+/lib/modules/3.10.108/vt-led.ko
+/etc/modules-boot.d/30-vt-led
+/etc/modules.d/30-vt-led

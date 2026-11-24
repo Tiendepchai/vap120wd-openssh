@@ -1,0 +1,8 @@
+Package: miniupnpd
+Version: 1
+Depends: libc, iptables, libpthread, librt
+Source: package/mtk/applications/miniupnpd
+Section: MTK Properties
+Architecture: ramips_24kec
+Installed-Size: 49848
+Description:  Miniupnpd Daemon.

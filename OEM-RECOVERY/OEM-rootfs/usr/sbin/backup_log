@@ -1,0 +1,73 @@
+#!/bin/sh
+
+# Check for the correct number of arguments
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 /tmp/log/<filename>"
+    exit 1
+fi
+
+# Define the source and destination directories
+src_dir="/tmp/log"
+dest_dir="/data/log"
+vt_default_log_file="/var/log/messages"
+vt_tmp_default_log_file="/tmp/log/messages"
+
+# Get the src file name from the argument
+src_file_path="$1"
+if [ "$src_file_path" == "$vt_default_log_file" ]; then
+    src_file_path="$vt_tmp_default_log_file"
+fi
+# logger "File path: $src_file_path."
+
+# Extract the directory path and file name
+src_dir_path=$(dirname "$src_file_path")
+file_name=$(basename "$src_file_path")
+
+# Define the maximum file size (4 MB in bytes)
+max_file_size=$((4 * 1024 * 1024))
+
+# Check if the directory path exists in /tmp/log
+if [ "$src_dir_path" != "$src_dir" ]; then
+    logger "Directory path does not exist in $src_dir."
+    exit 1
+fi
+
+# Check if the file name is in the list of allowed names
+case "$file_name" in
+    "messages" | "wifilog" | "logmesh")
+        # File name is allowed
+        ;;
+    *)
+        logger "File name is not allowed. Only messages, wifilog, and logmesh are allowed."
+        exit 1
+        ;;
+esac
+
+# Create the old file path in the source directory
+old_file_name="${file_name}.old"
+old_file_path="$src_dir/$old_file_name"
+
+# Create the dest file path and old dest file path in the source directory
+dest_file_path="$dest_dir/$file_name"
+old_dest_file_path="$dest_dir/$file_name.old"
+
+# Check if the old file exists in the source directory
+if [ -e "$old_file_path" ]; then
+    # Check if the dest file exists in the source directory
+    if [ -e "$dest_file_path" ]; then
+        # Check if the file in the destination directory exceeds the maximum size
+        dest_file_size=$(wc -c < "$dest_file_path")
+        if [ "$dest_file_size" -ge "$max_file_size" ]; then
+            # Rename the file in the destination directory to .old
+            mv "$dest_file_path" "$old_dest_file_path"
+            # logger "Rotated $dest_file_path to $old_dest_file_path"
+        fi
+    fi
+    # Append the old source file to the destination file
+    cat "$old_file_path" >> "$dest_file_path"
+    # logger "Appended $old_file_path to $dest_file_path"
+    # Remove old file
+    rm "$old_file_path"
+else
+    logger "Old file $old_file_path does not exist in the source directory."
+fi

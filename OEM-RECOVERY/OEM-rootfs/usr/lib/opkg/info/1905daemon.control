@@ -1,0 +1,8 @@
+Package: 1905daemon
+Version: 1
+Depends: libc, libllcfg, libpthread
+Source: package/mtk/applications/1905daemon
+Section: MTK Properties
+Architecture: ramips_24kec
+Installed-Size: 149309
+Description:  wifi app daemon

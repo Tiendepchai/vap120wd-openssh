@@ -1,0 +1,8 @@
+Package: setMACWLan
+Version: 1.0-1
+Depends: libc
+Source: package/viettel/setMACWLan
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 1798
+Description:  setMACWLan is an application to get MAC WLAN from Flash (Factory partition, offset=4, len=6) and set to EEPROM file /etc/wireless/mt7615/mt7615.eeprom.bin

@@ -1,0 +1,24 @@
+DHCP_POOL="lan"
+DHCPC_EVENT="${2}"
+DNS_SERV="${RDNSS}"
+case ${DHCPC_EVENT} in
+(bound|informed|updated|rebound|ra-updated) ;;
+(*) exit 0 ;;
+esac
+for DHCP_POOL in ${DHCP_POOL}
+do 
+    CUR_DNS="$(uci -q get dhcp.${DHCP_POOL}.dns)"
+    logger "[fanwar] cur dns = ${CUR_DNS}"
+    if [ "${CUR_DNS}" != "${DNS_SERV}" ]; then
+        logger "[fanwar] write dns ${RDNSS}"
+        uci -q delete dhcp.${DHCP_POOL}.dns
+        for DNS_SERV in ${DNS_SERV}
+        do    
+            uci add_list dhcp.${DHCP_POOL}.dns="$DNS_SERV"
+        done
+        uci commit dhcp
+        /etc/init.d/odhcpd restart
+    else
+        logger "[fanwar] do not write dns ${RDNSS}"
+    fi
+done

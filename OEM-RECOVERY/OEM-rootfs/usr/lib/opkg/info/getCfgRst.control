@@ -1,0 +1,8 @@
+Package: getCfgRst
+Version: 1
+Depends: libc
+Source: package/viettel/getCfgRst
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 1530
+Description:  set ssid wifi

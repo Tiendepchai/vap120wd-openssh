@@ -1,0 +1,1054 @@
+
+<%+header%>
+<%
+%>
+
+<%-
+    require "luci.tools.webadmin"
+    local ip = require "luci.ip"
+    local max_rules = 10 
+    local num_of_template = 0
+    local uci =  require("luci.model.uci").cursor()
+    local parental_tbl = uci:get_all("parental")
+    local parental_enabled = parental_tbl["global"]["enabled"]
+    local template_tbl = {}
+    local rule_tbl = {}
+    local neighbour_tbl = {}
+    for k, v in pairs(parental_tbl) do
+        if v[".type"] == "template" then
+            table.insert(template_tbl, v)
+            num_of_template = num_of_template + 1
+        elseif v[".type"] == "rule" then
+            table.insert(rule_tbl, v)
+        end
+    end
+    for _, v in ipairs(ip.neighbors({ family = 4 })) do
+        if v.mac and v.dev == "br-lan" then
+            table.insert(neighbour_tbl, v)
+        end
+    end
+    table.sort(rule_tbl, function(k1, k2) return k1.index < k2.index end)
+    table.sort(template_tbl, function(k1, k2) return k1.index < k2.index end)
+    table.sort(neighbour_tbl, function(k1, k2) return k1.mac < k2.mac end)
+-%>
+
+<script src="/luci-static/resources/monCon.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-17.250.41546-90ac861"></script>
+<style>
+    .quick-setup-apply
+    {
+        color: #ffffff;
+        padding: 5px 14px 6px;
+        background-color: #ec1b2e;
+        background-image: unset;
+        border-color: unset;
+        margin-bottom: 3px;
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 13px;
+        line-height: normal;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        font-weight: bold;
+        background-repeat: no-repeat;
+    }
+</style>
+<script>
+    var init_cb_state = false;
+    var max_macfilter_rules = 20;
+    var max_ipfilter_rules = 20;
+    var max_urlfilter_rules = 8;
+    var max_templates = 10;
+    var max_rules = <%=max_rules%>;
+
+    var foundId = new Array(max_rules);  
+    var arTemplate      = new Array(max_rules);
+    var hasRule     = new Array(max_rules);
+
+    var arTemplateRepeat = new Array(max_rules);
+
+    for(let i = 0; i < max_rules; i++ ){
+        arTemplate[i] = "";
+    }
+
+
+    var neighbourTbl = new Array();
+    var ruleTbl = new Array();
+    var templateTbl = new Array();
+    //get neighbour
+    <%
+        local neighbour_id = 0
+        for _,v in pairs(neighbour_tbl) do
+    %>
+    
+    var tmpArpEntry = new Object();
+    tmpArpEntry.index = "<%=neighbour_id%>";
+    tmpArpEntry.mac = "<%=v.mac%>";
+    neighbourTbl.push(tmpArpEntry);
+    <%
+    neighbour_id = neighbour_id + 1
+        end
+    %>
+
+    //get rule
+    <%
+        for _,v in pairs(rule_tbl) do
+    %>
+    var tmpRuleEntry = new Object();
+    tmpRuleEntry.name = "<%=v["name"]%>";
+    tmpRuleEntry.index = "<%=v["index"]%>";
+    tmpRuleEntry.mac = "<%=v["mac"]%>";
+    tmpRuleEntry.template = "<%=v["template"]%>";
+    ruleTbl.push(tmpRuleEntry);
+    <%
+        end
+    %>
+    
+    //get template
+    <%
+        for _,v in pairs(template_tbl) do
+    %>
+    var tmpTemplateEntry = new Object();
+    tmpTemplateEntry.index = "<%=v["index"]%>";
+    tmpTemplateEntry.name = "<%=v["name"]%>";
+    tmpTemplateEntry.start_time = "<%=v["start_time"]%>";
+    tmpTemplateEntry.stop_time = "<%=v["stop_time"]%>";
+    tmpTemplateEntry.weekdays = "<%=v["weekdays"]%>";
+    <%
+    if v["url"] then
+    else
+        v["url"] = {}
+        table.insert( v["url"], "All")
+    end
+    %>
+    tmpTemplateEntry.url = "<%=table.concat(v["url"], ", ")%>"
+    templateTbl.push(tmpTemplateEntry);
+    <%
+        end
+    %>
+
+    function isRulesChanged() {
+        for( let i = 0; i < max_rules; i++ ){
+            if(ruleTbl[i]){
+                var tmpTxt = $("#DevName"+ i).val();
+                //console.log("name " + index + ": " + tmpTxt + "---------- saved name: " +  ruleTbl[index].name);
+                if(ruleTbl[i].name !=  $("#DevName"+ i).val()){
+                    //console.log("name " + index + " changed");
+                    return 1;
+                }
+                var selectedMac = $("#Mac" + i + " option:selected").text();
+                //console.log("mac " + index + ": " + selectedMac + "---------- saved mac: " +  ruleTbl[index].mac);
+                if(ruleTbl[i].mac != selectedMac){
+                    //console.log("mac " + index + " changed");
+                    return 1;
+                }
+
+                var selectedTemplate = $("#Template" + i + " option:selected").text();
+                //console.log("template " + index + ": " + selectedTemplate + "---------- saved template: " +  ruleTbl[index].template);
+                if(selectedTemplate.includes(ruleTbl[i].template) == false){
+                    //console.log("template " + index + " changed");
+                    return 1;
+                }
+                //console.log("nothing  " + index + " changed");
+            }
+
+        }
+        return 0;
+    }
+
+
+    function checkDuplicateMacInSelectList (srcMac){
+        if(neighbourTbl.findIndex(element => element.mac == srcMac) >= 0){
+            return 1;
+        }
+        else{
+            return 0;
+        }
+
+    }
+
+    function onloadFunction(){
+        $("#Applying_form").hide();
+        $("#ParentalCtrl_form").show();
+
+        for(var  i = 0; i<= max_rules; i++)
+            $("#DevName" + i).val("");
+
+        console.log("arp list: %o", neighbourTbl);
+        console.log("rule list: %o", ruleTbl);
+        console.log("template list: %o", templateTbl);
+        <%
+            if parental_enabled == "1" then
+        %>
+            init_cb_state = true;
+            document.getElementById("PrtStatus").checked = true;
+            $('#parental-enable-div').show();
+            if (isFilterActive().length != 0){
+                $("#FilterWarning").parent().show();
+            }
+            $('#wid-id-1').show();
+        <%else%>
+            init_cb_state = false;
+            document.getElementById("PrtStatus").checked = false;
+            $('#parental-enable-div').hide();
+            $("#FilterWarning").parent().hide();
+            console.log("switch uncheck");
+            $('#wid-id-1').hide();
+        <%end%> 
+
+        
+        for(i=0; i <= max_rules; i++){
+            for(j =0; j< neighbourTbl.length; j++){
+                $("#Mac" + i).append($('<option>', {
+                    value: "macopt" + i +j,
+                    text: neighbourTbl[j].mac
+                }));
+            }
+            $("#Mac" + i).html($("#Mac" + i + " option").sort(function (a, b) {
+                return a.text == b.text ? 0 : a.text > b.text ? -1 : 1
+            }))
+
+            templateTbl.forEach(function(element){
+                $("#Template" + i).append($('<option>', {
+                    value: "tmpopt" + i + element.index,
+                    text: element.index + "." + element.name
+                }));
+            })
+
+            if(ruleTbl[i]){
+                hasRule[i] = 1;
+                $("#DevName" + i).val(ruleTbl[i].name);
+
+                foundId[i] = neighbourTbl.findIndex(element => element.mac == ruleTbl[i].mac)
+                if( foundId[i] >= 0){
+                    document.getElementById("Mac" + i).value= "macopt" + i + foundId[i];
+                }else{
+                    $("#Mac" + i).append($('<option>', {
+                        value: "custom_mac" + i,
+                        text: ruleTbl[i].mac
+                    }));
+                    $("#Mac" + i).html($("#Mac" + i + " option").sort(function (a, b) {
+                        return a.text == b.text ? 0 : a.text > b.text ? -1 : 1
+                    }))
+                    document.getElementById("Mac" + i).value= "custom_mac" + i;
+                }
+
+                var curTemplate = templateTbl.find(element => element.index == ruleTbl[i].template);
+                console.log(curTemplate);
+                document.getElementById("Template" + i).value= "tmpopt" + i + curTemplate.index;
+
+                $("#rule" + i).show();
+            }
+
+            document.getElementById("Mac10").value= "custom10";                
+            if(get_first_empty_entry() == -1)
+                $("#rule10").hide();
+
+
+        }
+
+         
+    }
+    function isFilterActive() {
+        return "";
+    }
+
+
+
+
+    function allLetter(inputtxt) 
+    { 
+        //return true;
+        var letters = /^[A-Za-z0-9]+$/;
+        if(inputtxt.match(letters)) 
+        { 
+            return true;
+        } 
+        else 
+        {
+            return false; 
+        } 
+    }
+    function ParentalSwitch() {
+        if(document.ParentalCtrl_form.PrtStatus.checked)
+        {
+            $('#parental-enable-div').show();
+            //$('#add_button').show();
+            if (isFilterActive().length != 0){
+                $("#FilterWarning").parent().show();
+            }
+            $('#wid-id-1').show(); 
+            console.log("switch check");                   
+        }
+        else
+        {
+            $('#parental-enable-div').hide();
+            //$('#add_button').hide();
+            $("#FilterWarning").parent().hide();
+            console.log("switch uncheck");
+            $('#wid-id-1').hide();                     
+        }
+    }
+    function updateResult(item, val) {
+        if( val == "no attribute information")
+        {
+            document.getElementById(item).innerHTML = "N/A";
+        }
+        else
+        {
+        document.getElementById(item).innerHTML = val;
+        }
+    }
+    function doHexCheck(c) {
+        if ( (c >= "0") && (c <= "9") )
+            return 1;
+        else if ( (c >= "A") && (c <= "F") )
+            return 1;
+        else if ( (c >= "a") && (c <= "f") )
+            return 1;
+        return -1;
+    }
+    function doMACcheck(obj) {
+        var szAddr = obj.text();
+        var len = szAddr.length;
+        if (len != 17) {
+            alert("Invalid MAC Address");
+            obj.focus();
+            return false;
+        } else if ( len == 17 ) {
+            var i = 2;
+            var c0 = szAddr.charAt(0);
+            var c1 = szAddr.charAt(1);
+            if ((doHexCheck(c0) < 0)||(doHexCheck(c1) < 0)) {
+                alert("Invalid MAC Address");
+                obj.focus();
+                return false;
+            }
+            i = 2;
+            while (i<len) {
+                var c0 = szAddr.charAt(i);
+                var c1 = szAddr.charAt(i+1);
+                var c2 = szAddr.charAt(i+2);
+                if (((c0 != ":")&&(c0 != "-"))||(doHexCheck(c1)<0)||(doHexCheck(c2)<0)) {
+                    alert("Invalid MAC Address");
+                    obj.focus();
+                    return false;
+                }
+                i = i + 3;
+            }               
+            /* Check if a MAC has both ":" and "-" */
+            if(szAddr.charAt(2) ==":"){
+                if((szAddr.charAt(5) !=":")||(szAddr.charAt(8) !=":")||(szAddr.charAt(11) !=":")||(szAddr.charAt(14) !=":")){
+                    alert("Invalid MAC Address");
+                    obj.focus();                        
+                    return false;
+                }
+            }
+            if(szAddr.charAt(2) =="-"){
+                if((szAddr.charAt(5) !="-")||(szAddr.charAt(8) !="-")||(szAddr.charAt(11) !="-")||(szAddr.charAt(14) !="-")){
+                    alert("Invalid MAC Address");
+                    obj.focus();                        
+                    return false;
+                }
+            }           
+            if((szAddr == "00:00:00:00:00:00") || (szAddr.toUpperCase() == "FF:FF:FF:FF:FF:FF")||
+                (szAddr == "00-00-00-00-00-00") || (szAddr.toUpperCase() == "FF-FF-FF-FF-FF-FF")) {
+                alert("Invalid MAC Address");
+                obj.focus();
+                return false;
+            }
+            return true;
+        }
+    }
+
+    function get_first_empty_entry() {          
+        var i;
+        for (i=0; i < max_rules; i++) {
+            if (hasRule[i] != 1) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    function change_color() {
+        var i = get_first_empty_entry();
+        $("#rule10").removeClass("odd_tr even_tr");
+        if (i%2) {
+            $("#rule10").addClass("even_tr");
+        }
+        else {
+            $("#rule10").addClass("odd_tr");
+        }
+    }
+    function rearrange_rules() {
+        var i,j;
+        for (i = 0; i < max_rules; i++) {
+            if (hasRule[i] == 1) {
+                $('#rule'+i).show();
+            }
+            else {
+                for (j = i+1; j<max_rules;j++) {
+                    if (hasRule[j] == 1) {
+                        $("#DevName"+i).val($("#DevName"+j).val());
+
+                        var selectedMacVal = $("#Mac" + j + " option:selected").val();
+                        var selectedMacTxt = $("#Mac" + j + " option:selected").text();
+                        if(selectedMacVal == "custom_mac" + j){
+                            var opt = " option[value='custom_mac" + i + "']";
+                            $("#Mac" + i +  opt).remove();
+
+                            $("#Mac" + i).append($('<option>', {
+                            value: "custom_mac" + i,
+                            text: selectedMacTxt
+                        }));
+                        document.getElementById("Mac" + i).value = "custom_mac" + i;
+                        }else{
+                            var valueMacIdx = selectedMacVal.charAt(selectedMacVal.length -1);
+                            document.getElementById("Mac" + i).value = "macopt" + i + valueMacIdx;
+                        }
+
+                        var selectedTmpVal = $("#Template" + j + " option:selected").val();
+                        var valueTmpIdx = selectedTmpVal.charAt(selectedTmpVal.length -1);
+                        document.getElementById("Template" + i).value = "tmpopt" + i + valueTmpIdx;
+
+                        hasRule[i] = 1;
+                        hasRule[j] = 0;
+                        $('#rule'+i).show();
+                        $('#rule'+j).hide();
+                        $("#DevName"+j).val("");
+                        var opt = " option[value='custom_mac" + j + "']";
+                        $("#Mac" + j +  opt).remove();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    function doDeleteEntry(i) {
+        $('#rule10').show();
+        $('#rule'+i).hide();
+        $('#DevName'+i).val("");
+        var opt = " option[value='custom_mac" + i + "']";
+        $("#Mac" + i +  opt).remove();
+        //document.getElementById("Mac" + i).value = "custom" + i;
+        hasRule[i] = 0;
+        rearrange_rules();
+        change_color();
+    }
+    function addNewEntry() {
+        var i;
+        i = get_first_empty_entry();
+        console.log("i = " + i);
+        if (i == (max_rules - 1)) {
+            $('#rule10').hide();
+        }
+        if (i < 0) {
+            alert("Rules table is full.");
+            return;
+        }
+        $('#DevName'+i).val($('#DevName10').val());
+
+        var mac10 = document.getElementById("Mac10");
+        if (mac10.value == "custom_mac10"){
+            var selectedMac = $("#Mac10 option:selected").text();
+            var opt = " option[value='custom_mac" + i + "']";
+            $("#Mac" + i +  opt).remove();
+            $("#Mac" + i).append($('<option>', {
+                    value: "custom_mac" + i,
+                    text: selectedMac
+                }));
+            document.getElementById("Mac" + i).value = "custom_mac" + i;
+        }
+        else{
+            var valueMac10Idx = mac10.value.charAt(mac10.value.length -1);
+            document.getElementById("Mac" + i).value = "macopt" + i + valueMac10Idx;
+        }
+
+        var template10 = document.getElementById("Template10");
+        var valueTmp10Idx = template10.value.charAt(template10.value.length -1);
+        document.getElementById("Template" + i).value = "tmpopt" + i + valueTmp10Idx;
+
+        $('#DevName10').val("");
+        $('#rule'+i).show();
+        hasRule[i] = 1;
+        change_color();
+    }
+    var a;
+    function writeMac(obj) {
+        obj.parentElement.previousElementSibling.value = obj.innerHTML.split(" ")[0];
+    }
+    function hhmm_to_minute(hhmm) {
+        var temp;
+        temp = hhmm.split(":",2);
+        return (parseInt(temp[0])*60 + parseInt(temp[1]));
+    }
+    function next_day(day) {
+        if (day == 6)
+            return 0;
+        else
+            return (day + 1);
+    }
+    function prev_day(day) {
+        if (day == 0)
+            return 6;
+        else
+            return (day - 1);
+    }
+    function isDuplicateTimeRange(this_id,that_id) {
+        var thisIntRange = new Array(8);
+        var thatIntRange = new Array(8);
+        var week = new Array(7);
+        var weekday;
+        var startmm, endmm;
+        var i,j;
+        var point;
+        var daycount = 0;
+        /* Contruct thisIntRange */
+        startmm = hhmm_to_minute($("#starttime" + this_id).html());
+        endmm = hhmm_to_minute($("#endtime" + this_id).html());
+        weekday = arTemplateRepeat[this_id].split(",",7);
+        for (i = 0; i < 7; i++) {
+            week[i] = 0;
+        }
+        for (i = 0; i < weekday.length; i++) {
+            week[parseInt(weekday[i])] = 1;
+            daycount++;
+        }
+        point = 0;
+        if (startmm < endmm) {
+            for (i = 0; i < 7; i++) {
+                if (week[i] == 1) {
+                    thisIntRange[point] = [startmm + i*24*60, endmm + i*24*60];
+                    point++;
+                }
+            }
+        }
+        if (startmm == endmm) {
+            if (daycount == 7) {
+                return true;
+            }
+            for (i = 0; i < 7; i++) {
+                if (week[i] == 1) {
+                    /* Only start if rules are stopped */
+                    if (0 == week[prev_day(i)]) {
+                        thisIntRange[point] = new Array;
+                        thisIntRange[point][0] = startmm + i*24*60;
+                        point++;
+                    }
+                }
+            }
+            point = 0;
+            for (i=0;i<7;i++){
+                if (week[i]) {
+                    /* Stop if you don't wanna run the rules the next_day */
+                    if (week[next_day(i)] == 0) {
+                        thisIntRange[point][1] = endmm + (i+1)*24*60;
+                        point++;
+                    }
+                }
+            }
+        }
+        if (startmm > endmm) {
+            for (i = 0; i < 7; i++) {
+                if (week[i] == 1) {
+                    thisIntRange[point] = new Array;
+                    thisIntRange[point][0] = startmm + i*24*60;
+                    point++;
+                }
+            }
+            point = 0;
+            for (i=0;i<7;i++){
+                if (week[i]) {
+                    thisIntRange[point][1] = endmm + (i+1)*24*60;
+                    point++;
+                }
+            }
+        }
+        if (thisIntRange[point-1][1] > 10080) {
+            thisIntRange[point] = [0, thisIntRange[point-1][1] - 10080];
+            thisIntRange[point-1][1] = 10080;
+        }
+        /* Contruct thatIntRange */
+        startmm = hhmm_to_minute($("#starttime" + that_id).html());
+        endmm = hhmm_to_minute($("#endtime" + that_id).html());
+        weekday = arTemplateRepeat[that_id].split(",",7);
+        for (i = 0; i < 7; i++) {
+            week[i] = 0;
+        }
+        daycount = 0;
+        for (i = 0; i < weekday.length; i++) {
+            week[parseInt(weekday[i])] = 1;
+            daycount++;
+        }
+        point = 0;
+        if (startmm < endmm) {
+            for (i = 0; i < 7; i++) {
+                if (week[i] == 1) {
+                    thatIntRange[point] = [startmm + i*24*60, endmm + i*24*60];
+                    point++;
+                }
+            }
+        }
+        if (startmm == endmm) {
+            if (daycount == 7) {
+                return true;
+            }
+            for (i = 0; i < 7; i++) {
+                if (week[i] == 1) {
+                    /* Only start if rules are stopped */
+                    if (0 == week[prev_day(i)]) {
+                        thatIntRange[point] = new Array;
+                        thatIntRange[point][0] = startmm + i*24*60;
+                        point++;
+                    }
+                }
+            }
+            point = 0;
+            for (i=0;i<7;i++){
+                if (week[i]) {
+                    /* Stop if you don't wanna run the rules the next_day */
+                    if (week[next_day(i)] == 0) {
+                        thatIntRange[point][1] = endmm + (i+1)*24*60;
+                        point++;
+                    }
+                }
+            }
+        }
+        if (startmm > endmm) {
+            for (i = 0; i < 7; i++) {
+                if (week[i] == 1) {
+                    thatIntRange[point] = new Array;
+                    thatIntRange[point][0] = startmm + i*24*60;
+                    point++;
+                }
+            }
+            point = 0;
+            for (i=0;i<7;i++){
+                if (week[i]) {
+                    thatIntRange[point][1] = endmm + (i+1)*24*60;
+                    point++;
+                }
+            }
+        }
+        if (thatIntRange[point-1][1] > 10080) {
+            thatIntRange[point] = [0, thatIntRange[point-1][1] - 10080];
+            thatIntRange[point-1][1] = 10080;
+        }
+        for (i = 0;i<8;i++) {
+            if (thisIntRange[i] == undefined) {
+                break;
+            }
+            for (j = 0;j<8;j++) {
+                if (thatIntRange[j] == undefined) {
+                    break;
+                }
+                if ((thisIntRange[i][0] > thatIntRange[j][0]) && (thisIntRange[i][0] < thatIntRange[j][1])) {
+                    return true;
+                }
+                if ((thisIntRange[i][1] > thatIntRange[j][0]) && (thisIntRange[i][1] < thatIntRange[j][1])) {
+                    return true;
+                }
+                if ((thatIntRange[j][0] > thisIntRange[i][0]) && (thatIntRange[j][0] < thisIntRange[i][1])) {
+                    return true;
+                }
+                if ((thatIntRange[j][1] > thisIntRange[i][0]) && (thatIntRange[j][1] < thisIntRange[i][1])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    } 
+    function ip2int(ip) {
+        return ip.split('.').reduce(function(ipInt, octet) { return (ipInt<<8) + parseInt(octet, 10)}, 0) >>> 0;
+    }
+    function isinsubnet(ip, net_ip, mask) {
+        if ((ip2int(ip)&ip2int(mask)) == (ip2int(net_ip)&ip2int(mask))) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    function doSubmit() {
+        for (i = 0;i< max_rules;i++) {
+            if (hasRule[i] == 1) {
+                if (($('#DevName'+ i).val().trim().length == 0) && ($("#Mac" + i + " option:selected").text().trim().length == 0)) {
+                    hasRule[i] = 0;
+                    continue;
+                }
+                if ($('#DevName'+ i).val().trim().length == 0) {
+                    $('#DevName'+ i).focus();
+                    alert("Rule name must not be empty");
+                    return;
+                }
+                if (!allLetter($('#DevName'+ i).val())) {
+                    $('#DevName'+ i).focus();
+                    alert("Invalid Rule name. Rule name must consist of digits (from 0 to 9) or letters in the English alphabet.");
+                    return;
+                }
+                if (!doMACcheck($("#Mac" + i + " option:selected"))) {
+                    $('#Mac'+ i).focus();
+                    return;
+                }
+                                        
+                for (var j=0;j<i;j++) {
+                    if ($("#Mac" + i + " option:selected").text() == $("#Mac" + j + " option:selected").text())
+                    {
+                        alert("One MAC address can only be bound to one rule!");
+                        $('#Mac'+ i).focus();
+                        return;
+                    }
+                    if ($('#DevName'+ i).val() == $('#DevName'+ j).val())
+                    {
+                        alert("Rule names must be different.");
+                        $('#Mac10').focus();
+                        return
+                    }
+                }
+            }
+        } 
+        rearrange_rules();
+
+        if( $('#DevName10').val().trim().length != 0 || $("#Mac10 option:selected").val() != "custom10"){
+
+            if ($('#DevName10').val().trim().length == 0) {
+                $('#DevName10').focus();
+                alert("Rule name must not be empty");
+                return;
+            }
+
+            if (!doMACcheck($("#Mac10 option:selected"))) {
+                $('#Mac10').focus();
+                return;
+            }
+
+            if (!allLetter($('#DevName'+ i).val())) {
+                    $('#DevName'+ i).focus();
+                    alert("Invalid Rule name. Rule name must consist of digits (from 0 to 9) or letters in the English alphabet.");
+                    return;
+                }
+
+            var i = get_first_empty_entry();
+            for (var j = 0; j < i; j++) {
+                if ($("#Mac10 option:selected").text() == $("#Mac" + j + " option:selected").text()){
+                    alert("One MAC address can only be bound to one rule!");
+                    $('#Mac10').focus();
+                    return
+                }
+                if ($('#DevName10').val() == $('#DevName'+ j).val()){
+                    alert("Rule names must be different.");
+                    $('#Mac10').focus();
+                    return
+                }
+            }
+            $('#DevName'+ i).val($('#DevName10').val());
+            $('#DevName10').val("");
+
+            var mac10 = document.getElementById("Mac10");
+            if (mac10.value == "custom_mac10"){
+                var selectedMac = $("#Mac10 option:selected").text();
+                var opt = " option[value='custom_mac" + i + "']";
+                $("#Mac" + i +  opt).remove();
+                $("#Mac" + i).append($('<option>', {
+                        value: "custom_mac" + i,
+                        text: selectedMac
+                    }));
+                document.getElementById("Mac" + i).value = "custom_mac" + i;
+            }
+            else{
+                var valueMac10Idx = mac10.value.charAt(mac10.value.length -1);
+                document.getElementById("Mac" + i).value = "macopt" + i + valueMac10Idx;
+            }
+
+            var template10 = document.getElementById("Template10");
+            var valueTmp10Idx = template10.value.charAt(template10.value.length -1);
+            document.getElementById("Template" + i).value = "tmpopt" + i + valueTmp10Idx;
+            hasRule[i] = 1;
+        }
+
+        //$("#Applying_form").show();
+        //$("#ParentalCtrl_form").hide();
+        var submitData = {};
+        var rule_idx_max = 0;
+        if(document.getElementById("PrtStatus").checked == true)
+            submitData.enabled = "1";
+        else
+            submitData.enabled = "0";
+        for(i = 0; i < max_rules; i++){
+            if(hasRule[i]){
+                submitData[i+1 + "-index"] = i+1;
+                submitData[i+1 + "-name"] = $("#DevName"+ i).val();
+                submitData[i+1 + "-mac"] = $("#Mac" + i + " option:selected").text().toLowerCase();
+                submitData[i+1 + "-template"] = $("#Template" + i + " option:selected").text().substr(0, $("#Template" + i + " option:selected").text().indexOf('.'));
+                rule_idx_max = i + 1;
+            }
+        }
+        console.log("rule_idx_max: " + rule_idx_max);
+        submitData.rule_idx_max = rule_idx_max.toString();
+        $.ajax({
+                url: '<%=luci.dispatcher.build_url("admin", "app", "parental", "apply_rule")%>',
+				type: 'POST',  
+				data: submitData,
+                beforeSend: function() {
+                    $("#Applying_form").show();
+                    $("#ParentalCtrl_form").hide();
+                },
+                complete: function() {   
+                        location.reload(); 
+                    },
+			});
+    }
+    function doEdit(idx) {
+        var cur_cb_state = document.getElementById("PrtStatus").checked;
+        if(cur_cb_state != init_cb_state){
+            alert('You must apply your changes to the Parental Control setting first!');
+            return;
+        }
+        if (isRulesChanged()) {
+            alert('You must apply your changes to the Parental Control rules table first!');
+            return;
+        }
+        window.location.href = "<%=luci.dispatcher.build_url("admin", "app", "parental", "prttemplate")%>/" + idx;
+    }
+    function doDelete(idx) {
+        console.log("deleting template" + idx);
+        var targetTemp = templateTbl.find(element => element.index == idx);
+        var cur_cb_state = document.getElementById("PrtStatus").checked;
+        if(cur_cb_state != init_cb_state){
+            alert('You must apply your changes to the Parental Control setting first!');
+            return;
+        }
+        if (isRulesChanged()) {
+            alert('You must apply your changes to the Parental Control rules table first!');
+            return;
+        }
+        for (var i = 0; i < max_rules;i++) {
+
+            var selectedTmp = $("#Template" + i + " option:selected").text();
+            if(selectedTmp.includes(templateTbl[idx-1].name) == true){
+                alert("Cannot delete this template because it is currently assigned to a rule!");
+                return;
+            }
+        }
+        if(confirm("Delete template " + targetTemp.name + "?") == false)
+            return;
+        $("#Applying_form").show();
+        $("#ParentalCtrl_form").hide();
+        $.ajax({
+                url: '<%=luci.dispatcher.build_url("admin", "app", "parental", "remove_template")%>',
+				type: 'POST',  
+				data: {target: idx},
+                success: function() {   
+                    location.reload();  
+                }
+			});
+        
+    }
+    function doAddTempate() {
+        var cur_cb_state = document.getElementById("PrtStatus").checked;
+        if(cur_cb_state != init_cb_state){
+            alert('You must apply your changes to the Parental Control setting first!');
+            return;
+        }
+        if (isRulesChanged()) {
+            alert('You must apply your changes to the Parental Control rules table first!');
+            return;
+        }
+
+        if ($("#tmp_list")[0].children.length > 9) {
+            alert("Cannot add more than 10 templates!");
+            return;
+        }
+        window.location.href = "<%=luci.dispatcher.build_url("admin", "app", "parental", "prttemplate")%>/" + "<%=num_of_template + 1%>";
+    }
+
+    function checkMacOption(id){
+        var x = document.getElementById("Mac" + id).value;
+        if (x == "custom" + id){
+            $("#Mac" + id).hide();
+            $("#OtherMac" + id).show();
+            $("#OtherMac" + id).focus();
+        }
+    }
+
+    function checkOtherMacOption(id){
+        var myInput = document.getElementById("OtherMac" + id);
+            if(myInput && myInput.value){
+                var opt = " option[value='custom_mac" + id + "']";
+                $("#Mac" + id +  opt).remove();
+                $("#Mac" + id).append($('<option>', {
+                    value: "custom_mac" + id,
+                    text: myInput.value
+                }));
+            document.getElementById("Mac" + id).value= "custom_mac" + id;
+            }
+            else{
+                if(neighbourTbl.length > 0)
+                    document.getElementById("Mac" + id).value= "macopt" + id + "0";
+            }
+            $("#Mac" + id).html($("#Mac" + id + " option").sort(function (a, b) {
+                return a.text == b.text ? 0 : a.text > b.text ? -1 : 1
+            }))
+            
+            $("#OtherMac" + id).hide();
+            $("#Mac" + id).show(); 
+    }
+
+</script>
+
+<body  class="container" onload = "onloadFunction()">
+    <form  id="Applying_form" style="display:none">
+        <div>
+            <h2><a>Applying Settings</a></h2>
+        </div>
+        <div class="alert-message" id="BusyMsg">
+            <img src="<%=resource%>/icons/loading.gif" alt="" style="vertical-align:middle" />
+            <big><strong>Please wait while the settings are being applied.</strong></big>
+        </div>
+    </form>
+
+    <form class="form-inline" name="ParentalCtrl_form" id="ParentalCtrl_form">
+        <div class="widget col-xs-12 col-lg-12 mb-5" id="status_div">
+            <legend><h2>Parental Control</h2></legend>
+
+            <div class="d-flex flex-wrap widget-body">
+
+                <fieldset class="col-lg-12 mb-3" id="setting_field">
+                    <legend><h5>Setting</h5></legend>
+                    <div class="form-group mb-2">
+                        <label for="parental_enable" class="col-lg-3">Enable</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="PrtStatus" id="PrtStatus" onChange="ParentalSwitch();">
+                            <span class="slider"></span>
+                        </label>
+                    </div> 
+                </fieldset>
+
+
+                <fieldset>
+                    <div class="form-group" style="display:none" >
+                        <div class="col-xs-12 col-sm-7 offset-sm-4 info-text" id="FilterWarning"  ></div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="col-lg-12 mb-3" id ="parental-enable-div" >
+                    <legend><h5>Rule Type Selection</h5></legend>
+                    <div class="form-group mb-2">  
+                        <div class="table-responsive col-xs-12" style="float: none; margin: 0 auto; text-align: center; padding-bottom: 30px;">
+                            <table id="rule_list" name="rule_list" cellpadding="0" cellspacing="0" class="table table-bordered" style="border:1px solid black; width:100%">
+                                <thead>
+                                    <tr class="thead-light" style="text-align: center;">
+                                        <th>Rule name</th>
+                                        <th>MAC address</th>
+                                        <th>Template</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <%-
+                                    for i = 0,max_rules,1
+                                    do
+                                    %> 
+                                        <tr id="rule<%=tostring(i)%>" style="text-align: center; <%if i ~= max_rules then%> display: none; <%end%>">
+                                            <td>
+                                                <input type="text" maxLength=20 size=20 name="DevName<%=tostring(i)%>" id="DevName<%=tostring(i)%>" >
+                                            </td>
+
+                                            <td>
+                                                <div style="margin: 0 auto; ">
+                                                    <select class="form-select" style="display: inline;" id="Mac<%=tostring(i)%>" name="Mac<%=tostring(i)%>" onchange="checkMacOption(<%=i%>)">
+                                                    <option onclick="checkMacOption(<%=i%>)" value="custom<%=i%>">-- custom --</option>                           
+                                                    </select>
+                                                    <input type="text" maxLength=17 size=17 style="display: none;" name="OtherMac<%=tostring(i)%>" id="OtherMac<%=tostring(i)%>" onfocusout="checkOtherMacOption(<%=i%>)">
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <select name="Template<%=tostring(i)%>" id="Template<%=tostring(i)%>" >        
+                                                </select>
+                                            </td>
+                                            
+                                            <td style="text-align: center;">
+                                                <%-
+                                                if i ~= max_rules then
+                                                %>
+                                                    <i class='fa fa-minus' style="font-size:18px; color: red" onmouseover='this.style.cursor="hand"' onclick='doDeleteEntry(<%=i%>)'></i>
+                                                <%else%>
+                                                    <i class="fa fa-plus" style="font-size:18px; color:green;" onclick="addNewEntry()"></i>
+                                                <%end%>
+                                            </td>
+                                        </tr>
+                                    <%- 
+                                    end
+                                    %>
+                                </tbody>
+                            </table>
+                        </div>
+                    
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="d-flex justify-content-end" style="margin-top: 2%; margin-bottom: 2%;  margin-right: 5%;">
+				 <input class="quick-setup-apply" name="__apply" style="width: 70px;" id="btnOK" type="button" value="Apply" onclick="doSubmit()">
+            </div>
+
+            <div id="wid-id-1">
+                <div id="template_div" class="d-flex flex-wrap widget-body">
+                    <fieldset class="col-lg-12" id="template_field">
+                        <legend><h5>Template</h5></legend>
+                        <div class="form-group mb-2">
+                            <div class="table-responsive col-xs-12" style="float: none; margin: 0 auto; text-align: center;">
+                                <table class="table table-bordered" style="border:1px solid black; width:100%">
+                                    <thead>
+                                        <tr class="thead-light" style="text-align: center; white-space: nowrap">
+                                            <th>Index</th>
+                                            <th>Template Name</th>
+                                            <th>Filter Type</th>
+                                            <th>Start time</th>
+                                            <th>End time</th>
+                                            <th>Repeat</th>
+                                            <th>Filtered addresses</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tmp_list" name="tmp_list" >
+                                        <%-
+                                        for k, v in pairs(template_tbl) do
+                                            if v["weekdays"] == "Sun,Mon,Tue,Wed,Thu,Fri,Sat" then
+                                                v["weekdays"] = "Everyday"
+                                            end
+                                            table.sort(v["url"])
+                                        %>
+                                        <tr style="text-align: center;">
+                                            <td><%=v["index"]%></td>
+                                            <td><%=v["name"]%></td>
+                                            <td><%=v["FilterType"]%></td><!--lambt9-->
+                                            <td><%=v["start_time"]%></td>
+                                            <td><%=v["stop_time"]%></td>
+                                            <td style="white-space: nowrap;"><%=v["weekdays"]%></td>
+                                            <td><%=table.concat(v["url"], ", ")%></td>
+                                            <td>
+                                                <em data-toggle='tooltip' data-placement='top' title='Edit' class='fa fa-pencil-alt icon-btn icon-btn-edit' onclick='doEdit(<%=v["index"]%>)'></em>
+                                                <%if v["index"] ~= "1" then%>
+                                                <em data-toggle='tooltip' data-placement='top' title='Delete' class='fa fa-times icon-btn icon-btn-delete' style="color: red; float:right;" onclick='doDelete(<%=v["index"]%>)'></em>
+                                                <%end%>
+                                            </td>
+                                        </tr>
+                                        <%end%>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </fieldset>
+                    
+                </div>
+                <div class="d-flex justify-content-end" style="margin-top: 2%; margin-bottom: 2%;  margin-right: 5%;">
+                    <input class="quick-setup-apply" style="width: 70px;" name="__add" id="add_button" value="Add" type="button" onclick="doAddTempate();">
+                </div>
+            </div>
+        </div>
+    </form>
+</body>
+<%+footer%>

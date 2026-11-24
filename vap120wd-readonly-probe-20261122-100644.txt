@@ -1,0 +1,369 @@
+
+==================== 01 - IDENTITY & KERNEL ====================
+Sat Nov 21 02:10:43 ICT 2026
+Linux vthomeap 3.10.108 #1 SMP Tue Oct 24 04:07:09 UTC 2023 mips GNU/Linux
+Linux version 3.10.108 (dungbd4@docker_ap) (gcc version 4.8.3 (OpenWrt/Linaro GCC 4.8-2014.04 unknown) ) #1 SMP Tue Oct 24 04:07:09 UTC 2023
+console=ttyS1,57600n8 root=/dev/mtdblock5 rootfstype=squashfs,jffs2 bootflag=1
+DISTRIB_ID='OpenWrt'
+DISTRIB_RELEASE='Chaos Calmer'
+DISTRIB_REVISION='unknown'
+DISTRIB_CODENAME='chaos_calmer'
+DISTRIB_TARGET='ramips/mt7621'
+DISTRIB_DESCRIPTION='OpenWrt Chaos Calmer 15.05.1'
+DISTRIB_TAINTS='no-all busybox'
+MT7621
+mtk-apsoc-demo
+
+==================== 02 - MTD & NAND GEOMETRY / SYSFS ====================
+dev:    size   erasesize  name
+mtd0: 07f80000 00020000 "ALL"
+mtd1: 00080000 00020000 "Bootloader"
+mtd2: 00080000 00020000 "Config"
+mtd3: 00040000 00020000 "Factory"
+mtd4: 01400000 00020000 "firmware"
+mtd5: 010fdf77 00020000 "rootfs"
+mtd6: 009a0000 00020000 "rootfs_data"
+mtd7: 01400000 00020000 "firmware2"
+mtd8: 05640000 00020000 "data"
+major minor  #blocks  name
+
+  31        0     130560 mtdblock0
+  31        1        512 mtdblock1
+  31        2        512 mtdblock2
+  31        3        256 mtdblock3
+  31        4      20480 mtdblock4
+  31        5      17399 mtdblock5
+  31        6       9856 mtdblock6
+  31        7      20480 mtdblock7
+  31        8      88320 mtdblock8
+mtd0: name=ALL type=nand size=133693440 erasesize=131072 writesize=2048 oobsize=64 flags=0x400 ecc_strength=4 bad_blocks=
+mtd1: name=Bootloader type=nand size=524288 erasesize=131072 writesize=2048 oobsize=64 flags=0x400 ecc_strength=4 bad_blocks=
+mtd2: name=Config type=nand size=524288 erasesize=131072 writesize=2048 oobsize=64 flags=0x400 ecc_strength=4 bad_blocks=
+mtd3: name=Factory type=nand size=262144 erasesize=131072 writesize=2048 oobsize=64 flags=0x400 ecc_strength=4 bad_blocks=
+mtd4: name=firmware type=nand size=20971520 erasesize=131072 writesize=2048 oobsize=64 flags=0x400 ecc_strength=4 bad_blocks=
+mtd5: name=rootfs type=nand size=17817463 erasesize=131072 writesize=2048 oobsize=64 flags=0x8000 ecc_strength=4 bad_blocks=
+mtd6: name=rootfs_data type=nand size=10092544 erasesize=131072 writesize=2048 oobsize=64 flags=0x400 ecc_strength=4 bad_blocks=
+mtd7: name=firmware2 type=nand size=20971520 erasesize=131072 writesize=2048 oobsize=64 flags=0x400 ecc_strength=4 bad_blocks=
+mtd8: name=data type=nand size=90439680 erasesize=131072 writesize=2048 oobsize=64 flags=0x400 ecc_strength=4 bad_blocks=
+
+==================== 03 - DMESG (NAND / ECC / BBT / UART / SWITCH / PCIE / WIFI) ====================
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 52,control_ch2=0, central_chl = 58 DBDCIdx= 1, Band= 0
+[RcGetHdevByPhyMode] channel 0 fix for rdev fetching
+[RcGetHdevByPhyMode] channel 0 fix for rdev fetching
+[RcGetHdevByPhyMode] channel 0 fix for rdev fetching
+[RcGetHdevByPhyMode]-- channel 0 fix for rdev fetching
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 1,control_ch2=0, central_chl = 1 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 2,control_ch2=0, central_chl = 2 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 3,control_ch2=0, central_chl = 3 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 4,control_ch2=0, central_chl = 4 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 5,control_ch2=0, central_chl = 5 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 6,control_ch2=0, central_chl = 6 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 7,control_ch2=0, central_chl = 7 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 8,control_ch2=0, central_chl = 8 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 9,control_ch2=0, central_chl = 9 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 10,control_ch2=0, central_chl = 10 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 11,control_ch2=0, central_chl = 11 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 12,control_ch2=0, central_chl = 12 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 13,control_ch2=0, central_chl = 13 DBDCIdx= 0, Band= 0
+WIFI [2G-5G] [MtCmdChannelSwitch:1907] MtCmdChannelSwitch: control_chl = 1,control_ch2=0, central_chl = 1 DBDCIdx= 0, Band= 0
+[RcGetHdevByPhyMode]-- channel 0 fix for rdev fetching
+[RcGetHdevByPhyMode]-- channel 0 fix for rdev fetching
+[RcGetHdevByPhyMode]-- channel 0 fix for rdev fetching
+no net device found for eth0 or 
+Ralink HW NAT Module Enabled
+eth0 ifindex =3
+eth1 ifindex =5
+
+==================== 04 - U-BOOT ENV CONFIG & SAFE KEYS (READ-ONLY) ====================
+--- /etc/fw_env.config ---
+# Configuration file for fw_(printenv/setenv) utility.
+# Up to two entries are valid, in this case the redundant
+# environment sector is assumed present.
+# Notice, that the "Number of sectors" is not required on NOR and SPI-dataflash.
+# Futhermore, if the Flash sector size is omitted, this value is assumed to
+# be the same as the Environment size, which is valid for NOR and SPI-dataflash
+# Device offset must be prefixed with 0x to be parsed as a hexadecimal value.
+
+
+# MTD device name	Device offset	Env. size	Flash sector size	Number of sectors
+/dev/mtd1		0x60000		0x1000		0x20000			1--- fw_printenv (safe allowlist only) ---
+bootflag=1
+bootdelay=2
+bootcmd=tftp
+baudrate=57600
+ipaddr=10.10.10.123
+serverip=10.10.10.3
+BootType=3
+bootargs=console=ttyS1,57600n8 root=/dev/mtdblock5 rootfstype=squashfs,jffs2 bootflag=1
+--- all env key names (values omitted) ---
+BootType
+baudrate
+bootargs
+bootcmd
+bootdelay
+bootflag
+ethaddr
+ipaddr
+rb_flag
+rb_reason
+rb_time
+serverip
+stderr
+stdin
+stdout
+
+==================== 05 - OEM DUAL-BANK / ROLLBACK / UPGRADE SCRIPTS (READ-ONLY) ====================
+/lib/upgrade/common.sh:229:	fw_printenv bootflag > /tmp/bootflag
+/lib/upgrade/common.sh:230:	. /tmp/bootflag
+/lib/upgrade/common.sh:232:	case "$bootflag" in
+/lib/upgrade/common.sh:234:		export PART_NAME=firmware2
+/lib/upgrade/common.sh:235:		fw_setenv bootflag 2
+/lib/upgrade/common.sh:239:		fw_setenv bootflag 1
+/lib/upgrade/common.sh:243:		fw_setenv bootflag 1
+/usr/sbin/arping:94242:reboot_reason r rb_flag
+/usr/sbin/brctl:94242:reboot_reason r rb_flag
+/usr/sbin/check_fw_info:5:fw2_hex=`flash r firmware2 32 32`
+/usr/sbin/check_fw_info:6:bootflag_hex=`fw_printenv bootflag`
+/usr/sbin/check_fw_info:38:echo -n ${bootflag_hex:9:1}
+/usr/sbin/chroot:94242:reboot_reason r rb_flag
+/usr/sbin/crond:94242:reboot_reason r rb_flag
+/usr/sbin/ntpd:94242:reboot_reason r rb_flag
+/usr/sbin/reboot_reason:1607:	rb_flag 	Reboot flag (must always be 0 during run time)
+/usr/sbin/reboot_reason:1639:rb_flag
+/usr/sbin/reboot_reason:1640:fw_setenv rb_flag %s
+/usr/sbin/reboot_reason:1661:fw_setenv rb_flag 1
+/usr/sbin/reboot_reason:1681:rb_flag
+/usr/sbin/telnetd:94242:reboot_reason r rb_flag
+/usr/sbin/udhcpd:94242:reboot_reason r rb_flag
+/sbin/devmem:94242:reboot_reason r rb_flag
+/sbin/halt:94242:reboot_reason r rb_flag
+/sbin/hwclock:94242:reboot_reason r rb_flag
+/sbin/ifconfig:94242:reboot_reason r rb_flag
+/sbin/mkswap:94242:reboot_reason r rb_flag
+/sbin/mtd:4601:The device is in the format of mtdX (eg: mtd4) or its label.
+/sbin/mtd:4642:Example: To write linux.trx to mtd4 labeled as linux and reboot afterwards
+/sbin/pivot_root:94242:reboot_reason r rb_flag
+/sbin/poweroff:94242:reboot_reason r rb_flag
+/sbin/reboot:94242:reboot_reason r rb_flag
+/sbin/route:94242:reboot_reason r rb_flag
+/sbin/start-stop-daemon:94242:reboot_reason r rb_flag
+/sbin/switch_root:94242:reboot_reason r rb_flag
+/sbin/sysctl:94242:reboot_reason r rb_flag
+/sbin/udhcpc:94242:reboot_reason r rb_flag
+/sbin/vconfig:94242:reboot_reason r rb_flag
+--- /lib/upgrade files ---
+drwxr-xr-x    3 root     root            94 Oct 24  2023 .
+drwxr-xr-x    1 root     root             0 Oct 24  2023 ..
+-rwxrwxr-x    1 root     root          6233 Oct 24  2023 common.sh
+drwxr-xr-x    2 root     root           142 Oct 24  2023 keep.d
+-rw-rw-r--    1 root     root           360 Oct 24  2023 luci-add-conffiles.sh
+-rwxrwxr-x    1 root     root           874 Oct 24  2023 platform.sh
+
+==================== 06 - ETHERNET / SWITCH / VLAN (REDACTED) ====================
+VLAN Dev name	 | VLAN ID
+Name-Type: VLAN_NAME_TYPE_RAW_PLUS_VID_NO_PAD
+eth0.1         | 1  | eth0
+eth0.2         | 2  | eth0
+bridge name	bridge id		STP enabled	interfaces
+br-lan		7fff.240b2aa95f2c	no		eth0.1
+							eth0.2
+							ra0
+							ra1
+							ra2
+							ra3
+							rax0
+							rax1
+							rax2
+							rax3
+network.loopback=interface
+network.loopback.ifname='lo'
+network.loopback.proto='static'
+network.loopback.ipaddr='127.0.0.1'
+network.loopback.netmask='255.0.0.0'
+network.globals=globals
+network.globals.wan_df_route='wan0'
+network.lan=interface
+network.lan.ifname='eth0.1 eth0.2'
+network.lan.type='bridge'
+network.lan.proto='static'
+network.lan.ipaddr='192.168.2.1'
+network.lan.netmask='255.255.255.0'
+network.lan.ipv6='1'
+network.lan.ip6assign='64'
+network.lan.bridge_empty='1'
+network.lan.force_link='1'
+network.wan0=interface
+network.wan0.ifname='eth1'
+network.wan0.proto='dhcp'
+network.wan0.defaultroute='1'
+network.wan0._vlanid='0'
+network.wan0._service='internet'
+network.wan0_ip6=interface
+network.wan0_ip6.ifname='eth1'
+network.wan0_ip6.defaultroute='1'
+network.wan0_ip6.proto='dhcpv6'
+network.wan0_ip6.reqprefix='auto'
+network.wan0_ip6.reqaddress='none'
+
+==================== 07 - PCIE & WI-FI HARDWARE / PROFILE (REDACTED) ====================
+0000:00:00.0 vendor=0x0e8d device=0x0801 subsys_v=0x0000 subsys_d=0x0000 class=0x060400
+0000:01:00.0 vendor=0x14c3 device=0x7615 subsys_v=0x7615 subsys_d=0x14c3 class=0x000280
+wireless.rax0=wifi-iface
+wireless.rax0.ifname='rax0'
+wireless.rax0.device='MT7615D_1_2'
+wireless.rax0.hidden='0'
+wireless.rax0.vifidx='1'
+wireless.rax0.mode='ap'
+wireless.rax1=wifi-iface
+wireless.rax1.ifname='rax1'
+wireless.rax1.device='MT7615D_1_2'
+wireless.rax1.hidden='0'
+wireless.rax1.vifidx='2'
+wireless.rax1.mode='ap'
+wireless.rax2=wifi-iface
+wireless.rax2.ifname='rax2'
+wireless.rax2.device='MT7615D_1_2'
+wireless.rax2.hidden='0'
+wireless.rax2.vifidx='3'
+wireless.rax2.mode='ap'
+wireless.rax3=wifi-iface
+wireless.rax3.ifname='rax3'
+wireless.rax3.device='MT7615D_1_2'
+wireless.rax3.hidden='0'
+wireless.rax3.vifidx='4'
+wireless.rax3.mode='ap'
+wireless.MT7615D_1_2=wifi-device
+wireless.MT7615D_1_2.HT_OpMode='0'
+wireless.MT7615D_1_2.HT_BSSCoexistence='0'
+wireless.MT7615D_1_2.HT_AMSDU='1'
+wireless.MT7615D_1_2.wifimode='9'
+wireless.MT7615D_1_2.shortslot='1'
+wireless.MT7615D_1_2.region='1'
+wireless.MT7615D_1_2.HT_GI='1'
+wireless.MT7615D_1_2.mode='ap'
+wireless.MT7615D_1_2.HT_LDPC='1'
+wireless.MT7615D_1_2.pktaggre='0'
+wireless.MT7615D_1_2.band='2G'
+wireless.MT7615D_1_2.type='vht-viettelgroup'
+wireless.MT7615D_1_2.network='lan'
+wireless.MT7615D_1_2.country='VN'
+wireless.MT7615D_1_2.device='MT7615D_1_2'
+wireless.MT7615D_1_2.HT_STBC='1'
+wireless.MT7615D_1_2.HT_DisallowTKIP='1'
+wireless.MT7615D_1_2.HT_BADecline='0'
+wireless.MT7615D_1_2.HT_AutoBA='1'
+wireless.MT7615D_1_2.txpower='100'
+wireless.MT7615D_1_2.bgprotect='0'
+wireless.MT7615D_1_2.channel='0'
+wireless.MT7615D_1_2.E2pAccessMode='2'
+wireless.MT7615D_1_2.vendor='vht-viettelgroup'
+wireless.MT7615D_1_2.WmmCapable='1'
+wireless.MT7615D_1_2.bw='20'
+wireless.ra1=wifi-iface
+wireless.ra1.ifname='ra1'
+wireless.ra1.device='MT7615D_1_1'
+wireless.ra1.hidden='0'
+wireless.ra1.vifidx='2'
+wireless.ra1.mode='ap'
+wireless.ra0=wifi-iface
+wireless.ra0.ifname='ra0'
+wireless.ra0.device='MT7615D_1_1'
+wireless.ra0.hidden='0'
+wireless.ra0.vifidx='1'
+wireless.ra0.mode='ap'
+wireless.ra3=wifi-iface
+wireless.ra3.ifname='ra3'
+wireless.ra3.device='MT7615D_1_1'
+wireless.ra3.hidden='1'
+wireless.ra3.vifidx='4'
+wireless.ra3.mode='ap'
+wireless.ra2=wifi-iface
+wireless.ra2.ifname='ra2'
+wireless.ra2.device='MT7615D_1_1'
+wireless.ra2.hidden='0'
+wireless.ra2.vifidx='3'
+wireless.ra2.mode='ap'
+wireless.MT7615D_1_1=wifi-device
+wireless.MT7615D_1_1.HT_OpMode='0'
+wireless.MT7615D_1_1.HT_AMSDU='1'
+wireless.MT7615D_1_1.VHT_BW_SIGNAL='0'
+wireless.MT7615D_1_1.wifimode='14'
+wireless.MT7615D_1_1.shortslot='1'
+wireless.MT7615D_1_1.VHT_LDPC='1'
+wireless.MT7615D_1_1.VHT_SGI='1'
+wireless.MT7615D_1_1.VHT_STBC='1'
+wireless.MT7615D_1_1.HT_BADecline='0'
+wireless.MT7615D_1_1.HT_GI='1'
+wireless.MT7615D_1_1.mode='ap'
+wireless.MT7615D_1_1.HT_LDPC='1'
+wireless.MT7615D_1_1.pktaggre='0'
+wireless.MT7615D_1_1.band='5G'
+wireless.MT7615D_1_1.type='vht-viettelgroup'
+wireless.MT7615D_1_1.network='lan'
+wireless.MT7615D_1_1.country='VN'
+wireless.MT7615D_1_1.device='MT7615D_1_1'
+wireless.MT7615D_1_1.HT_STBC='1'
+wireless.MT7615D_1_1.HT_DisallowTKIP='1'
+wireless.MT7615D_1_1.aregion='11'
+wireless.MT7615D_1_1.HT_AutoBA='1'
+wireless.MT7615D_1_1.txpower='100'
+wireless.MT7615D_1_1.bgprotect='0'
+wireless.MT7615D_1_1.channel='0'
+wireless.MT7615D_1_1.E2pAccessMode='2'
+wireless.MT7615D_1_1.vendor='vht-viettelgroup'
+wireless.MT7615D_1_1.WmmCapable='1'
+wireless.MT7615D_1_1.bw='80'
+/etc/wireless:
+drwxrwxrwx    1 root     root             0 Oct 24  2023 .
+drwxrwxrwx    1 root     root             0 Nov 21 02:10 ..
+-rw-rw-rw-    1 root     root           578 Oct 24  2023 l1profile.dat
+drwxrwxrwx    1 root     root             0 Oct 24  2023 mt7615
+
+/etc/wireless/mt7615:
+drwxrwxrwx    1 root     root             0 Oct 24  2023 .
+drwxrwxrwx    1 root     root             0 Oct 24  2023 ..
+-r--r--r--    1 root     root          8840 Nov 21 02:09 DBDC_card0.dat
+-rw-rw-rw-    1 root     root         11626 Oct 24  2023 mt7615-sku-bf.dat
+-rw-rw-rw-    1 root     root         11626 Oct 24  2023 mt7615-sku.dat
+-rw-rw-rw-    1 root     root          7217 Oct 24  2023 mt7615.1.2G.dat
+-rw-rw-rw-    1 root     root          7221 Oct 24  2023 mt7615.1.5G.dat
+-rw-rw-rw-    1 root     root          1024 Oct 24  2023 mt7615.eeprom.bin
+-rw-r--r--    1 root     root             7 Oct 24  2023 version
+
+==================== 08 - GPIO / LEDS / INTERRUPTS / MOUNT ====================
+           CPU0       CPU1       CPU2       CPU3       
+  3:         29       1652          0          0  MIPS GIC  eth0
+  4:          0          0          1       2186  MIPS GIC  ra0
+  7:      19340          0          0          0  MIPS GIC  timer
+ 11:          0          0          0          0  MIPS GIC  HS_DMA
+ 12:          0          0          0          0  MIPS GIC  ralink_gpio
+ 13:          0          0          0          0  MIPS GIC  Ralink_DMA
+ 23:          2          0          0          0  MIPS GIC  Ralink_ESW
+ 26:         92          0          0          0  MIPS GIC  serial
+ 56:      12755          0          0          0  MIPS GIC  IPI_resched
+ 57:          0      13609          0          0  MIPS GIC  IPI_resched
+ 58:          0          0       6785          0  MIPS GIC  IPI_resched
+ 59:          0          0          0       9245  MIPS GIC  IPI_resched
+ 60:       7024          0          0          0  MIPS GIC  IPI_call
+ 61:          0      24981          0          0  MIPS GIC  IPI_call
+ 62:          0          0      25747          0  MIPS GIC  IPI_call
+ 63:          0          0          0      24642  MIPS GIC  IPI_call
+ERR:          0
+rootfs on / type rootfs (rw)
+/dev/root on /rom type squashfs (ro,relatime)
+proc on /proc type proc (rw,nosuid,nodev,noexec,noatime)
+sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,noatime)
+tmpfs on /tmp type tmpfs (rw,nosuid,nodev,noatime)
+/dev/mtdblock6 on /overlay type jffs2 (rw,noatime)
+overlayfs:/overlay on / type overlayfs (rw,noatime,lowerdir=/,upperdir=/overlay)
+tmpfs on /dev type tmpfs (rw,nosuid,relatime,size=512k,mode=755)
+devpts on /dev/pts type devpts (rw,nosuid,noexec,relatime,mode=600)
+/dev/mtdblock8 on /data type jffs2 (rw,noatime)
+Filesystem                Size      Used Available Use% Mounted on
+rootfs                    9.6M    652.0K      9.0M   7% /
+/dev/root                 7.5M      7.5M         0 100% /rom
+tmpfs                    59.3M      1.1M     58.2M   2% /tmp
+/dev/mtdblock6            9.6M    652.0K      9.0M   7% /overlay
+overlayfs:/overlay        9.6M    652.0K      9.0M   7% /
+tmpfs                   512.0K         0    512.0K   0% /dev
+/dev/mtdblock8           86.3M      4.9M     81.4M   6% /data

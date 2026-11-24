@@ -1,0 +1,8 @@
+Package: key_generation
+Version: 1.0-1
+Depends: libc, libpthread
+Source: package/viettel/key_generation
+Section: Viettel
+Architecture: ramips_24kec
+Installed-Size: 2060
+Description:  A simple "Hello, world!" -application.

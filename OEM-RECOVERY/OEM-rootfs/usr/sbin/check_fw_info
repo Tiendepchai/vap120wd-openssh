@@ -1,0 +1,41 @@
+#!/bin/sh
+
+uboot_hex=`flash r Bootloader 32 5`
+fw1_hex=`flash r firmware 32 32`
+fw2_hex=`flash r firmware2 32 32`
+bootflag_hex=`fw_printenv bootflag`
+
+echo ""
+
+echo -n "uboot     : "
+for i in `seq 0 4`
+do
+    offset=$((i*2))
+    c=${uboot_hex:$offset:2}
+    echo -e -n "\x$c"
+done
+echo ""
+
+echo -n "firmware 1: "
+for i in `seq 0 15`
+do
+    offset=$((i*2))
+    c=${fw1_hex:$offset:2}
+    echo -e -n "\x$c"
+done
+echo ""
+
+echo -n "firmware 2: "
+for i in `seq 0 15`
+do
+    offset=$((i*2))
+    c=${fw2_hex:$offset:2}
+    echo -e -n "\x$c"
+done
+echo ""
+
+echo -n "current   : OS"
+echo -n ${bootflag_hex:9:1}
+
+echo ""
+echo ""

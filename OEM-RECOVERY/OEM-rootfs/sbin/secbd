@@ -1,0 +1,50 @@
+#!/usr/bin/env lua
+
+local cfg_file = "/tmp/bd.conf"
+function set_value_by_key(key, value)
+    local filecontent = {}
+    local k,v
+    local new_key = 1
+    local file = io.open(cfg_file, "r")
+    if file ~= nil then
+        for line in file:lines() do
+            k,v = line:match("([^,]+)=([^,]+)")
+            if k == key then
+                v = value
+                new_key = 0
+            end
+            table.insert(filecontent, k.."="..v)
+        end
+        if new_key == 1 then
+            table.insert(filecontent, key.."="..value)
+        end
+        io.close(file)
+    else
+        table.insert(filecontent, key.."="..value)
+    end
+    file = io.open(cfg_file, "w")
+    for _,v in ipairs(filecontent) do
+        file:write(v..'\n')
+    end
+    io.close(file)
+end
+function get_value_by_key(key)
+    local file = io.open(cfg_file, "r")
+    if file == nil then
+        return 0
+    end
+    local k,v
+    for line in file:lines() do
+        k,v = line:match("([^,]+)=([^,]+)")
+        if k == key then
+            return v
+        end
+    end
+    io.close(file)
+    return 0
+end
+if arg[1] == "set" then
+    set_value_by_key(arg[2],arg[3])
+elseif arg[1] == "get" then
+    print(get_value_by_key(arg[2]))
+end

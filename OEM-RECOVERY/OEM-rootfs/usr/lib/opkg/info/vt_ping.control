@@ -1,0 +1,8 @@
+Package: vt_ping
+Version: 1
+Depends: libc, libubus, libubox
+Source: package/viettel/vt_ping
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 2370
+Description:  check ping ie,gw

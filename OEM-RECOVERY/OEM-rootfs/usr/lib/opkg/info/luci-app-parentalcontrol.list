@@ -1,0 +1,3 @@
+/usr/lib/lua/luci/view/parentalcontrol/prtcontrol.htm
+/usr/lib/lua/luci/view/parentalcontrol/prttemplate.htm
+/usr/lib/lua/luci/controller/parentalcontrol.lua

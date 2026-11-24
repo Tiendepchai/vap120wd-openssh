@@ -1,0 +1,9 @@
+Package: config_on_flash_cli
+Version: 0001
+Depends: libc, libnvram
+Source: package/viettel/config_on_flash
+License: GPL-2.0+
+Section: Viettel Properties
+Architecture: ramips_24kec
+Installed-Size: 3765
+Description:  Command line interface to read and write configuration in flash

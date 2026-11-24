@@ -1,0 +1,157 @@
+#!bin/sh
+MIN_IP_STRING_LEN=7 #example 1.1.1.1
+IPV4_REGEX="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+LIGHTTPD="/usr/sbin/lighttpd"
+LIGHTTPD_SA_CONF_PATH="/etc/lighttpd/lighttpd_smartalert.conf"
+IP_LAN=$(ifconfig br-lan | grep -m 1 "inet addr" | awk '{print $2}' | awk -F: '{print $2}')
+LIGHTTPD_SA_PID=$(ps -w | grep "$LIGHTTPD_SA_CONF_PATH" | grep -v grep | awk '{print $1}')
+CMD=$1  #
+ARGS=$2
+
+_url2dnsquery() {
+    url="$1"
+    url_parts=$(echo "$url" | tr '.' ' ')
+    
+    dns_query=""
+    
+    for part in $url_parts; do
+        length=$(printf "%02x" $(echo -n "$part" | wc -c))
+        dns_query="${dns_query}${length}${part}"
+    done
+    
+    dns_query="${dns_query}00"
+    
+    echo "$dns_query"
+}
+
+_init_smartalert_firewall() {
+
+    #ebtables rule
+    ebtables -t nat -N vt_smartalert_prerouting
+    ebtables -t nat -N vt_smartalert_whitelist
+    ebtables -t nat -P vt_smartalert_prerouting RETURN
+    ebtables -t nat -P vt_smartalert_whitelist RETURN
+    
+    ebtables -t nat -D PREROUTING -j vt_smartalert_prerouting
+    ebtables -t nat -D vt_smartalert_prerouting -j vt_smartalert_whitelist
+    ebtables -t nat -I PREROUTING -j vt_smartalert_prerouting
+    ebtables -t nat -I vt_smartalert_prerouting -j vt_smartalert_whitelist
+
+
+
+    #iptables rules
+    iptables -t nat -N vt_smartalert_prerouting
+    iptables -t nat -N vt_smartalert_whitelist
+    iptables -t filter -N vt_smartalert_input
+
+    iptables -t nat -D vt_smartalert_prerouting -j vt_smartalert_whitelist
+    iptables -t nat -D prerouting_rule -j vt_smartalert_prerouting
+    iptables -t nat -I vt_smartalert_prerouting -j vt_smartalert_whitelist
+    iptables -t nat -I prerouting_rule -j vt_smartalert_prerouting
+
+    iptables -t filter -D input_rule -j vt_smartalert_input
+    iptables -t filter -I input_rule -j vt_smartalert_input
+}
+
+_flush_smartalert_firewall() {
+
+    #ebtables rules
+    ebtables -t nat -F vt_smartalert_prerouting
+
+    #iptables rules
+    iptables -t filter -F vt_smartalert_input
+    iptables -t nat -F vt_smartalert_prerouting
+}
+
+start_smartalert_firewall() {
+    _init_smartalert_firewall
+    _flush_smartalert_firewall
+    smartalert_enable=$(uci get smartalert.main.enable)
+    if [ "$smartalert_enable" = "1" ];then
+
+        # get TMS ip
+        BROKER_URL=$(uci get obuspa.mqtt.broker_address)
+        #BROKER_URL_DNS=$(_url2dnsquery $BROKER_URL)     #todo, currently not use
+        BROKER_IP=$(nslookup $BROKER_URL | grep -A 1 $BROKER_URL | grep -E -o $IPV4_REGEX)
+
+        #add rules to iptables
+        if [[ ${#BROKER_IP} -ge $MIN_IP_STRING_LEN ]]; then
+            for IP in $BROKER_IP
+			do
+                #ebtables rules
+                ebtables -t nat -L vt_smartalert_whitelist | grep "$IP" > /dev/null 2>&1
+                if [[ "$?" -eq "1" ]]; then
+                    ebtables -t nat -A vt_smartalert_whitelist -p IPv4 --ip-source $IP -j ACCEPT
+                    ebtables -t nat -A vt_smartalert_whitelist -p IPv4 --ip-destination $IP -j ACCEPT
+                fi
+
+                #iptables rules
+                iptables -t nat -C vt_smartalert_whitelist -s $IP -j ACCEPT > /dev/null 2>&1
+                if [[ "$?" -eq "1" ]]; then
+                    iptables -t nat -A vt_smartalert_whitelist -s $IP -j ACCEPT
+                    iptables -t nat -A vt_smartalert_whitelist -d $IP -j ACCEPT
+                fi
+            done
+        fi
+
+
+
+        #ebtables rules
+        ebtables -t nat -I vt_smartalert_prerouting -j vt_smartalert_whitelist
+        ebtables -t nat -A vt_smartalert_prerouting -p IPv4 --ip-proto tcp --ip-dport 80 -j redirect --redirect-target ACCEPT
+        ebtables -t nat -A vt_smartalert_prerouting -p IPv4 --ip-proto tcp --ip-dport 443 -j redirect --redirect-target ACCEPT
+
+        #iptables rules
+        iptables -t nat -I vt_smartalert_prerouting -j vt_smartalert_whitelist
+        iptables -t nat -A vt_smartalert_prerouting -i br-lan -p tcp -m tcp --dport 80 -j DNAT --to-destination $IP_LAN:8083 
+        iptables -t nat -A vt_smartalert_prerouting -i br-lan -p tcp -m tcp --dport 443 -j DNAT --to-destination $IP_LAN:8084 
+        iptables -t nat -A vt_smartalert_prerouting -i br-lan -p udp -m udp --dport 53 -j DNAT --to-destination $IP_LAN:53 
+        iptables -t nat -A vt_smartalert_prerouting -i br-lan -p tcp -m tcp --dport 53 -j DNAT --to-destination $IP_LAN:53 
+
+
+        msftconnecttest=$(_url2dnsquery 'msftconnecttest')
+        edgemicrosoftcom=$(_url2dnsquery 'edge.microsoft.com')
+        iptables -t filter -I vt_smartalert_input -p udp -m udp --dport 53 -m string --string "$msftconnecttest" --algo bm --to 65535 -j DROP 
+        iptables -t filter -I vt_smartalert_input -p udp -m udp --dport 53 -m string --string "$edgemicrosoftcom" --algo bm --to 65535 -j DROP 
+        iptables -t filter -I vt_smartalert_input -p tcp -m tcp --dport 53 -m string --string "$msftconnecttest" --algo bm --to 65535 -j DROP 
+        iptables -t filter -I vt_smartalert_input -p tcp -m tcp --dport 53 -m string --string "$edgemicrosoftcom" --algo bm --to 65535 -j DROP 
+    fi
+    
+}
+
+update_dnat () {
+        new_ip_lan=$1
+        logger "sonnh update: $new_ip_lan"
+        iptables -t nat -F vt_smartalert_prerouting
+        iptables -t nat -I vt_smartalert_prerouting -j vt_smartalert_whitelist
+        iptables -t nat -A vt_smartalert_prerouting -i br-lan -p tcp -m tcp --dport 80 -j DNAT --to-destination $new_ip_lan:8083 
+        iptables -t nat -A vt_smartalert_prerouting -i br-lan -p tcp -m tcp --dport 443 -j DNAT --to-destination $new_ip_lan:8084 
+        iptables -t nat -A vt_smartalert_prerouting -i br-lan -p udp -m udp --dport 53 -j DNAT --to-destination $new_ip_lan:53 
+        iptables -t nat -A vt_smartalert_prerouting -i br-lan -p tcp -m tcp --dport 53 -j DNAT --to-destination $new_ip_lan:53 
+}
+
+enable() {
+
+    uci set smartalert.main.enable=1
+    uci commit smartalert
+
+    start_smartalert_firewall
+    kill $LIGHTTPD_SA_PID > /dev/null 2>&1
+    $LIGHTTPD -f $LIGHTTPD_SA_CONF_PATH &
+
+    /etc/init.d/dnsmasq restart
+
+}
+
+disable() {
+
+    uci set smartalert.main.enable=0
+    uci commit smartalert
+
+    kill $LIGHTTPD_SA_PID > /dev/null 2>&1
+    _flush_smartalert_firewall
+
+    /etc/init.d/dnsmasq restart
+}
+
+$CMD $ARGS

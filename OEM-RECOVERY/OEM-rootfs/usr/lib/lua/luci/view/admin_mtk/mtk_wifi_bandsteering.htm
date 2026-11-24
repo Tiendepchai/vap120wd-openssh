@@ -1,0 +1,847 @@
+<%+header%>
+
+<script src="/luci-static/resources/monCon.js"></script>
+
+<%
+local mtkwifi = require("mtkwifi")
+local devs = mtkwifi.get_all_devs()
+local map_cfgs
+local appliedMapEnableDiff
+if pcall(require, "map_helper") then
+    map_cfgs = mtkwifi.load_profile(mtkwifi.__easymesh_profile_path())
+    local appliedMapDiffTable = mtkwifi.diff_profile(mtkwifi.__easymesh_profile_path())
+    appliedMapEnableDiff = appliedMapDiffTable["MapEnable"] and appliedMapDiffTable["MapEnable"][2] or nil
+end
+local role_agent_on
+if map_cfgs.MapEnable == "1" and map_cfgs.DeviceRole == "2" then 
+    role_agent_on = 1
+else
+    role_agent_on = 0
+end
+%>
+
+
+<h2><a name="content">Quick Setup</a></h2>
+<br>
+<div id="content">
+    <form class="form-inline" METHOD="POST" name="bandsteering_form" ACTION="<%=luci.dispatcher.build_url("admin", "mtk", "bndstr", "bndstr_cfg")%>" enctype="multipart/form-data" autocomplete="off" >
+        <input type="hidden" name="wififlg" value="0">
+        <input type="hidden" name="wifi11acflg" value="0">
+        <input type="hidden" name="bndstrflg" value="0">
+
+        <div class="row row-w-100">
+            <div class="widget col-xs-12 col-lg-12" id="wifi_div">
+                <!-- <header>Wi-Fi and Bandsteering</header> -->
+        
+                <% if #devs == 0 then %>
+                    <div class="alert-message">
+                        <big><strong>No wireless device found!</strong></big>
+                    </div>
+                <% end %>
+            
+                <div class="d-flex flex-wrap widget-body">
+                    <% if role_agent_on == 1 then %>
+                        <div class="alert-message">
+                            <strong style="color: red;"><i>EasyMesh is enabled, role Agent. No config is allowed!</i></strong>
+                        </div>
+                    <% end %>
+                    <% for _,dev in ipairs(devs) do %>
+                    <% if dev.devname == "MT7615D.1.2" then %>
+                    <!-- Wireless 2.4 Gz-->
+                    <fieldset class="col-lg-6 mb-3" id="wlan_div" <%if role_agent_on == 1 then%> disabled <%end%>>
+                        <table class="cbi-section-table" style="boxmargin:10px; empty-cells:hide; box-shadow: none">
+                            <tbody>
+                                <tr>
+                                    <td style="width:34px">
+                                        <img src="/luci-static/resources/icons/wifi_big.png" style="float:left; margin-right:10px">
+                                    </td>
+                                    <td colspan="2" style="text-align:left">
+                                        <legend id="wifi_legend" >Wi-Fi 2.4GHz Configuration</legend>
+                                        <% if not dev.vifs then %>
+                                        <span style="color:red;">* FATAL ERROR: Incorrect Profile Settings</span>
+                                        <% else %>
+                                            <% local diff = mtkwifi.diff_profile(dev.profile) %>
+                                            <% if next(diff) ~= nil then %>
+                                                <span style="color:red;">* need reload to apply changes</span>
+                                            <% end %>
+                                        <% end %>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        </table>
+                        <!-- /physical device -->
+                        <% if dev.vifs and dev.state == "up" then%>
+                        <!-- network list -->
+                        <% for _,vif in ipairs(dev.vifs) do %>
+                        <% if vif.vifname == "rax0" then %>
+                        <div id="HaveWifi-div">
+                            <div class="form-group" id="ActionBtns_<%=vif.vifname%>">
+                                <label class="col-lg-5" style="justify-content: unset;" for="Enable_AccessPoint">Enable SSID_2G</label>
+                                <% if vif.state == "down" then %>
+                                <input type="hidden" name="Enable_AccessPoint" id="Enable_AccessPoint" value="0">
+                                <button type="button" class="cbi-button enable-button" onclick="visit_url('<%=vif.vifname%>','<%=luci.dispatcher.build_url("admin", "mtk", "bndstr", "vif_enable", vif.vifname)%>')" title="Enable this network">
+                                    <em class="fas form-btn-apply"></em>
+                                    <span><%_Enable%></span>
+                                </button>
+                                <% elseif vif.state == "up" then %>
+                                <input type="hidden" name="Enable_AccessPoint" id="Enable_AccessPoint" value="1">
+                                <button type="button" class="cbi-button disable-button" onclick="visit_url('<%=vif.vifname%>','<%=luci.dispatcher.build_url("admin", "mtk", "bndstr", "vif_disable", vif.vifname)%>')" title="Disable this network">
+                                    <em class="fas form-btn-reset"></em>
+                                    <span><%_Disable%></span>
+                                </button>
+                                <% end %>
+                                <div id="BusyText_<%=vif.vifname%>" style="display:none">
+                                    <img src="<%=resource%>/icons/loading.gif" alt="" style="vertical-align:middle" />
+                                    <big><strong>Processing request.</strong></big>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group">
+                                <label class="col-lg-5" style="justify-content: unset;" for="ESSID">Network Name SSID_2G</label>
+                                <input type="text" class="col-lg-7" name="ESSID" size="32" maxlength="32" id="ESSID" value="<%=vif.__ssid and vif.__ssid:gsub("\"","&quot;") or nil%>">
+                            </div>
+                            <br>
+                            <div class="form-group">
+                                <label class="col-lg-5" style="justify-content: unset;" for="">Authentication Type</label>
+                                <div class="col-lg-7" style="padding-left: 0px;">
+                                    <select id="WEP_Selection" name="WEP_Selection" onChange="AuthMode_onchange(this.options[this.options.selectedIndex].value, 1)">
+                                    <!-- <% local AuthModes = (WscValue == "0") and dev.AuthModeList or dev.WpsEnableAuthModeList %> -->
+                                    <% local AuthModes = dev.AuthModeList %>
+                                    <% for _, v in ipairs(AuthModes) do %>
+                                        <% if v ~= "WPA3-192-bit" or dev.isWPA3_192bitSupported then %>
+                                            <% if vif.__ieee8021x == "1" then %>
+                                                <% if v == "IEEE8021X" then %>
+                                                    <option value="<%=v%>" selected="selected" ><%=v%></option>
+                                                <% else %>
+                                                    <option value="<%=v%>" ><%=v%></option>
+                                                <% end %>
+                                            <% elseif vif.__authmode == "OPEN" then %>
+                                                <% if (vif.__encrypttype== "NONE" and v == "Disable") or
+                                                    (vif.__encrypttype== "WEP" and v == "OPEN") then %>
+                                                    <option value="<%=v%>" selected="selected" ><%=v%></option>
+                                                <% else %>
+                                                    <option value="<%=v%>" ><%=v%></option>
+                                                <% end %>
+                                            <% elseif vif.__authmode == "OWE" then %>
+                                                <% if vif.__encrypttype== "AES" and v == "Enhanced Open" then %>
+                                                    <option value="<%=v%>" selected="selected" ><%=v%></option>
+                                                <% else %>
+                                                    <option value="<%=v%>" ><%=v%></option>
+                                                <% end %>
+                                            <% elseif vif.__authmode == "WPA3-192" then %>
+                                                <% if vif.__encrypttype== "GCMP256" and v == "WPA3-192-bit" then %>
+                                                    <option value="<%=v%>" selected="selected" ><%=v%></option>
+                                                <% else %>
+                                                    <option value="<%=v%>" ><%=v%></option>
+                                                <% end %>
+                                            <% else %>
+                                                <option value="<%=v%>" <% if vif.__authmode == v then %> selected="selected" <% end %> ><%=v%></option>
+                                            <% end %>
+                                        <% end %>
+                                    <% end %>
+                                    </select>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group" id="WPAXPSK" style="display:none;">
+                                <label class="col-lg-5" style="justify-content: unset;" for="PreSharedKey">Password</label>
+                                <div class="input-group col-lg-6 px-0">
+                                    <input TYPE="password" ID="PreSharedKey" NAME="PreSharedKey" STYLE="WIDTH:140" SIZE="48" MAXLENGTH="63" VALUE="<%=vif.__wpapsk and vif.__wpapsk:gsub("\"","&quot;") or nil%>" >
+                                </div>
+                            </div>
+                        </div>
+                        <div id="NoWifi-div" class="form-group" style="display: none;">
+                            <label class="text-justify pr-4">
+                                <p>The 2.4GHz Access Point is currently disabled. To use Wi-Fi 5GHz, please enable Access Point in<a href="<%=luci.dispatcher.build_url("admin", "mtk", "wifi")%>">Wi-Fi 2.4GHz Configuration</a>.</p>
+                            </label>
+                        </div>
+                        <% end %>
+                        <% end %>
+                        <% end %>
+                    </fieldset>
+                    <%elseif dev.devname == "MT7615D.1.1" then%>
+                    <!-- Wireless 5 Gz-->
+                    <fieldset class="col-lg-6 mb-3" id="wlan11ac_div" <%if role_agent_on == 1 then%> disabled <%end%>>
+                        <table class="cbi-section-table" style="boxmargin:10px; empty-cells:hide; box-shadow: none">
+                            <tbody>
+                                <tr>
+                                    <td style="width:34px">
+                                        <img src="/luci-static/resources/icons/wifi_big.png" style="float:left; margin-right:10px">
+                                    </td>
+                                    <td colspan="2" style="text-align:left">
+                                        <legend id="wifi_legend" >Wi-Fi 5GHz Configuration</legend>
+                                        <% if not dev.vifs then %>
+                                        <span style="color:red;">* FATAL ERROR: Incorrect Profile Settings</span>
+                                        <% else %>
+                                            <% local diff = mtkwifi.diff_profile(dev.profile) %>
+                                            <% if next(diff) ~= nil then %>
+                                                <span style="color:red;">* need reload to apply changes</span>
+                                            <% end %>
+                                        <% end %>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        </table>
+
+                        <!-- /physical device -->
+                        <% if dev.vifs and dev.state == "up" then%>
+                        <!-- network list -->
+                        <% for _,vif in ipairs(dev.vifs) do %>
+                        <% if vif.vifname == "ra0" then %>
+                        <div id="HaveWifi11ac-div">
+                            <div class="form-group" id="ActionBtns_<%=vif.vifname%>">
+                                <label class="col-lg-5" style="justify-content: unset;" for="wlan11ac_APenable">Enable SSID_5G</label>
+                                <% if vif.state == "down" then %>
+                                <input type="hidden" name="wlan11ac_APenable" id="wlan11ac_APenable" value="0">
+                                <button type="button" class="cbi-button enable-button" onclick="visit_url('<%=vif.vifname%>','<%=luci.dispatcher.build_url("admin", "mtk", "bndstr", "vif_enable", vif.vifname)%>')" title="Enable this network">
+                                    <em class="fas form-btn-apply"></em>
+                                    <span><%_Enable%></span>
+                                </button>
+                                <% elseif vif.state == "up" then %>
+                                <input type="hidden" name="wlan11ac_APenable" id="wlan11ac_APenable" value="1">
+                                <button type="button" class="cbi-button disable-button" onclick="visit_url('<%=vif.vifname%>','<%=luci.dispatcher.build_url("admin", "mtk", "bndstr", "vif_disable", vif.vifname)%>')" title="Disable this network">
+                                    <em class="fas form-btn-reset"></em>
+                                    <span><%_Disable%></span>
+                                </button>
+                                <% end %>
+                                <div id="BusyText_<%=vif.vifname%>" style="display:none">
+                                    <img src="<%=resource%>/icons/loading.gif" alt="" style="vertical-align:middle" />
+                                    <big><strong>Processing request.</strong></big>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group">
+                                <label class="col-lg-5" style="justify-content: unset;" for="ESSID11AC">Network Name SSID_5G</label>
+                                <input type="text" class="col-lg-7" name="ESSID11AC" size="40" maxlength="40" id="ESSID11AC" value="<%=vif.__ssid and vif.__ssid:gsub("\"","&quot;") or nil%>">
+                            </div>
+                            <br>
+                            <div class="form-group">
+                                <label class="col-lg-5" style="justify-content: unset;" for="">Authentication Type</label>
+                                <div class="col-lg-7" style="padding-left: 0px;">
+                                    <select id="WEP_Selection_11ac" name="WEP_Selection_11ac" onChange="AuthMode_onchange(this.options[this.options.selectedIndex].value, 2)">
+                                    <!-- <% local AuthModes = (WscValue == "0") and dev.AuthModeList or dev.WpsEnableAuthModeList %> -->
+                                    <% local AuthModes = dev.AuthModeList %>
+                                    <% for _, v in ipairs(AuthModes) do %>
+                                        <% if v ~= "WPA3-192-bit" or dev.isWPA3_192bitSupported then %>
+                                            <% if vif.__ieee8021x == "1" then %>
+                                                <% if v == "IEEE8021X" then %>
+                                                    <option value="<%=v%>" selected="selected" ><%=v%></option>
+                                                <% else %>
+                                                    <option value="<%=v%>" ><%=v%></option>
+                                                <% end %>
+                                            <% elseif vif.__authmode == "OPEN" then %>
+                                                <% if (vif.__encrypttype== "NONE" and v == "Disable") or
+                                                    (vif.__encrypttype== "WEP" and v == "OPEN") then %>
+                                                    <option value="<%=v%>" selected="selected" ><%=v%></option>
+                                                <% else %>
+                                                    <option value="<%=v%>" ><%=v%></option>
+                                                <% end %>
+                                            <% elseif vif.__authmode == "OWE" then %>
+                                                <% if vif.__encrypttype== "AES" and v == "Enhanced Open" then %>
+                                                    <option value="<%=v%>" selected="selected" ><%=v%></option>
+                                                <% else %>
+                                                    <option value="<%=v%>" ><%=v%></option>
+                                                <% end %>
+                                            <% elseif vif.__authmode == "WPA3-192" then %>
+                                                <% if vif.__encrypttype== "GCMP256" and v == "WPA3-192-bit" then %>
+                                                    <option value="<%=v%>" selected="selected" ><%=v%></option>
+                                                <% else %>
+                                                    <option value="<%=v%>" ><%=v%></option>
+                                                <% end %>
+                                            <% else %>
+                                                <option value="<%=v%>" <% if vif.__authmode == v then %> selected="selected" <% end %> ><%=v%></option>
+                                            <% end %>
+                                        <% end %>
+                                    <% end %>
+                                    </select>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group" id="WPAXPSK_AC" style="display:none;">
+                                <label class="col-lg-5" style="justify-content: unset;" for="PreSharedKey11AC">Password</label>
+                                <div class="input-group col-lg-6 px-0">
+                                    <input TYPE="password" name="PreSharedKey11AC" size="32" maxlength="63" id="PreSharedKey11AC" value="<%=vif.__wpapsk and vif.__wpapsk:gsub("\"","&quot;") or nil%>">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="NoWifi11ac-div" class="form-group" style="display: none;">
+                            <label class="text-justify pr-4">
+                                <p>The 5GHz Access Point is currently disabled. To use Wi-Fi 5GHz, please enable Access Point in<a href="<%=luci.dispatcher.build_url("admin", "mtk", "wifi")%>">Wi-Fi 5GHz Configuration</a>.</p>
+                            </label>
+                        </div>
+                        <% end %>
+                        <% end %>
+                        <% end %>
+                    </fieldset>
+                    <%end%>
+                    <%end%>
+                    <fieldset class="col-lg-12">
+                        <legend>Band Steering Setting</legend>
+                        <div class="form-group">
+                            <label class="col-lg-2-5" style="padding-right:15px;" Band_Steering_En">Band Steering</label>
+                            <input type="checkbox" name="Band_Steering_En" id="Band_Steering_En" 
+                                <% for _,dev in ipairs(devs) do %>
+                                <% if dev.devname == "MT7615D.1.2" and dev.state == "up" then %>
+                                <% if map_cfgs.BSEnable == "1" then %>
+                                checked
+                                <% end %>
+                                <% end %> 
+                                <% end %>
+                            onclick="ShowBandSteering(0);">
+                            <label id="bndstr_note" class="input-description font-italic offset-lg-2-5 col-lg-8">When Band Steering feature is enabled, both Wi-Fi bands are always enabled. In addition, SSID, Authentication Type and Password are synchronized between two bands. In order to disable Wi-Fi, you must disable Band Steering.</label>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+            <!-- <div class="col-lg-12 d-flex align-items-center justify-content-center"> -->
+            <div class="cbi-page-actions col-lg-12 d-flex align-items-center justify-content-center" id="action">
+                <button type="button" class="cbi-button cbi-button-apply" onclick="doSubmit();">Apply</button>
+            </div>
+            <!-- </div> -->
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript">
+    var wAPEnable;
+    var wSSIDEnable;
+    var wSSID="";
+    var wAuthType="";
+    var wPSK="";
+    var w11acAPEnable;
+    var w11acSSIDEnable;
+    var w11acSSID="";
+    var w11acAuthType="";
+    var w11acPSK="";
+    var bandstrEnable;
+    var hide_wifi = 0;
+    var wifi_24_on;
+    var wifi_5_on;
+
+    <% if role_agent_on == 1 then %>
+        hide_wifi = 1;
+    <% end %>
+
+    <% if #devs == 0 then %>
+        wAPEnable = "0";
+        wSSIDEnable = "0";
+        w11acAPEnable = "0";
+        w11acSSIDEnable = "0";
+    <% end %>
+
+    <% for _,dev in ipairs(devs) do %>
+    <% if dev.devname == "MT7615D.1.2" then %>
+        <% if dev.state == "down" then %>
+            wAPEnable="0";
+        <% elseif dev.state == "up" then %>
+            wAPEnable="1";
+        <% end %>
+        <% if dev.vifs and dev.state == "up" then%>
+            <% for _,vif in ipairs(dev.vifs) do %>
+                <% if (vif.vifname == "rax0") and (vif.state == "up") then %>
+                    wSSIDEnable = "1";
+                    wSSID = "<%=vif.__ssid and vif.__ssid:gsub("\"","&quot;") or nil%>";
+                    wAuthType = "<%=vif.__authmode%>";
+                    wPSK= "<%=vif.__wpapsk and vif.__wpapsk:gsub("\"","&quot;") or nil%>";
+                <% elseif (vif.vifname == "rax0") and (vif.state == "down") then %>
+                    wSSIDEnable="0";
+                <% end %>
+            <% end %>
+        <% end %>
+        <% if dev.state == "up" then %>
+            <% if map_cfgs.BSEnable == "1" then %>
+                bandstrEnable = "1";
+            <% end %>
+        <% end %>
+    <% elseif dev.devname == "MT7615D.1.1" then %>
+        <% if dev.state == "down" then %>
+            w11acAPEnable="0";
+        <% elseif dev.state == "up" then %>
+            w11acAPEnable="1";
+        <% end %>
+        <% if dev.vifs and dev.state == "up" then%>
+            <% for _,vif in ipairs(dev.vifs) do %>
+                <% if (vif.vifname == "ra0") and (vif.state == "up") then %>
+                    w11acSSIDEnable="1";
+                    w11acSSID = "<%=vif.__ssid and vif.__ssid:gsub("\"","&quot;") or nil%>";
+                    w11acAuthType = "<%=vif.__authmode%>";
+                    w11acPSK = "<%=vif.__wpapsk and vif.__wpapsk:gsub("\"","&quot;") or nil%>";
+                <% elseif (vif.vifname == "ra0") and (vif.state == "down") then %>
+                    w11acSSIDEnable="0";
+                <% end %>
+            <% end %>
+        <% end %>
+    <% end %>
+    <% end %>
+    wifi_24_on = wAPEnable&wSSIDEnable;
+    wifi_5_on = w11acAPEnable&w11acSSIDEnable;
+
+    /* Custom select method */
+    function cs_disable(sl_element) {
+        $("#" + sl_element).parent().addClass("select-disable");
+        $("#" + sl_element).prop("disabled", true);
+    }
+    function cs_enable(sl_element) {
+        $("#" + sl_element).parent().removeClass("select-disable");
+        $("#" + sl_element).prop("disabled", false);
+    }
+
+    function display_wifi(){
+        if ($("#Enable_AccessPoint").val() == "1") {
+            $("#ESSID").prop("disabled",false);
+            $("#PreSharedKey").prop("disabled",false);
+            cs_enable("WEP_Selection");
+        }
+        else {
+            $("#ESSID").prop("disabled",true);
+            $("#PreSharedKey").prop("disabled",true);
+            cs_disable("WEP_Selection");
+        }
+    }
+			
+    function display_wifi11ac(){
+        if ($("#wlan11ac_APenable").val() == "1") {
+            $("#ESSID11AC").prop("disabled",false);
+            $("#PreSharedKey11AC").prop("disabled",false);
+            cs_enable("WEP_Selection_11ac");
+        }
+        else {
+            $("#ESSID11AC").prop("disabled",true);
+            $("#PreSharedKey11AC").prop("disabled",true);
+            cs_disable("WEP_Selection_11ac");
+        }
+    }
+
+    function doWEPChange(){
+        if ($("#WEP_Selection").val() == "OPEN") {
+            $("#PreSharedKey").parent().parent().hide();// WPAWPSK
+        }
+        else {
+            $("#PreSharedKey").parent().parent().show();
+        }
+    }
+    function doWEPChange_11ac(){
+        if ($("#WEP_Selection_11ac").val() == "OPEN") {
+            $("#PreSharedKey11AC").parent().parent().hide();// WPAWPSK_AC
+        }
+        else {
+            
+            $("#PreSharedKey11AC").parent().parent().show();
+        }
+    }
+
+    function enable_all_buttons()
+    {
+        var inp = document.getElementsByTagName("INPUT");
+        for(var idx=0; idx < inp.length; idx++){
+            inp[idx].disabled = false;
+        }
+    }
+    function disable_all_buttons()
+    {
+        var inp = document.getElementsByTagName("INPUT");
+        for(var idx=0; idx < inp.length; idx++){
+            inp[idx].disabled = true;
+        }
+    }
+    function visit_url(idSuffix,to)
+    {
+        disable_all_buttons();
+        document.getElementById("ActionBtns_"+idSuffix).style.display = "none";
+        document.getElementById("BusyText_"+idSuffix).style.display = "";
+        location.href = to;
+    }
+
+
+    function AuthMode_onchange (authMode,band)
+    {
+        /* band=1 => 2.4GHz
+           band=2 => 5GHz*/
+        var tbody_to_display = [];
+        var security_table_id_list = ["WPAXPSK"];
+        var security_table_id_list_ac = ["WPAXPSK_AC"];
+        switch(authMode){
+            case "OPEN":
+            case "WEPAUTO":
+            case "SHARED":
+                break;
+            case "Enhanced Open":
+                break;
+            case "WPAPSK":
+            case "WPA2PSK":
+            case "WPA3PSK":
+            case "WPA2PSKWPA3PSK":
+                if(band == 1){
+                    tbody_to_display.push("WPAXPSK");
+                }
+                else if(band == 2){
+                    tbody_to_display.push("WPAXPSK_AC");
+                }
+                break;
+            case "WPAPSKWPA2PSK":
+                if(band == 1){
+                    tbody_to_display.push("WPAXPSK");
+                }
+                else if(band == 2){
+                    tbody_to_display.push("WPAXPSK_AC");
+                }
+                break;
+            case "WPA2":
+            case "WPA3":
+                case "WPA3-192-bit":
+                break;
+            case "WPA1WPA2":
+                break;
+            case "IEEE8021X":
+                break;
+            default:
+                break;
+        }
+        <% if map_cfgs.MapEnable == "1" then %>
+            var ele;
+            var i;
+            if(band == 1){
+                // 2.4 GHz
+                ele = document.getElementById("WEP_Selection");
+            }
+            else if(band == 2){
+                // 5GHz
+                ele = document.getElementById("WEP_Selection_11ac");
+            }
+            for (i = 0; i < ele.length;i++)
+            {
+                if (ele.options[i].value == "WPAPSK" || ele.options[i].value == "OPEN")
+                {
+                    ele.options[i].disabled = true;
+                    ele.options[i].selected = false;
+                }
+            }
+        <% end %>
+        if(band == 1){
+            for (tid in security_table_id_list) {
+                var tmp_tbody = document.getElementById(security_table_id_list[tid])
+                if (tbody_to_display.indexOf(security_table_id_list[tid]) != -1) {
+                    if (tmp_tbody) tmp_tbody.style.display="";
+                } else {
+                    if (tmp_tbody) tmp_tbody.style.display="none";
+                }
+            }
+        }
+        else if(band == 2){
+            for (tid in security_table_id_list_ac) {
+                var tmp_tbody = document.getElementById(security_table_id_list_ac[tid])
+                if (tbody_to_display.indexOf(security_table_id_list_ac[tid]) != -1) {
+                    if (tmp_tbody) tmp_tbody.style.display="";
+                } else {
+                    if (tmp_tbody) tmp_tbody.style.display="none";
+                }
+            }
+        }
+    }
+    function ShowBandSteering(onload) {
+        if ($("#Band_Steering_En").prop("checked") == true) {
+            $("#wlan11ac_div").hide();
+            $("#ActionBtns_rax0").hide();
+            $("#wifi_legend").html("Wi FI Dual Band Settings");
+            $("#bndstr_note").show();
+            if (onload == 0) {
+                if ((wAPEnable != "1") || (wSSIDEnable != "1")) {
+                    $("#HaveWifi-div").show();
+                    $("#NoWifi-div").hide();
+                    $("#ESSID").prop("disabled",false);
+                    $("#PreSharedKey").prop("disabled",false);
+                    cs_enable("WEP_Selection");
+                }
+            }
+        }
+        else {
+            if ((onload == 0)&( $("#ESSID").val() == $("#ESSID11AC").val())) {
+                var WifiSSID_bandsteering = $("#ESSID").val();
+                if(WifiSSID_bandsteering.includes("VIETTEL_"))
+                {
+                    $("#ESSID11AC").val(WifiSSID_bandsteering.replace("VIETTEL_", "VIETTEL_5G_"));
+                }
+                else
+                {
+                    $("#ESSID11AC").val(WifiSSID_bandsteering + "_5G");
+                }
+            }
+            if (onload == 0) {
+                if (wAPEnable != "1") {
+                    $("#HaveWifi-div").hide();
+                    $("#NoWifi-div").show();
+                    $("#ESSID").prop("disabled",true);
+                    $("#PreSharedKey").prop("disabled",true);
+                    cs_disable("WEP_Selection");
+                }
+                if (wSSIDEnable != "1") {
+                    $("#ESSID").prop("disabled",true);
+                    $("#PreSharedKey").prop("disabled",true);
+                    cs_disable("WEP_Selection");
+                }
+            }
+            $("#wlan11ac_div").show();
+            $("#ActionBtns_rax0").show();
+            $("#wifi_legend").html("Wi-Fi 2.4GHz Configuration");
+            $("#bndstr_note").hide();
+        }
+    }
+    function onloadCheck_wifi() {
+        if (wAPEnable == "1") {
+            $("#HaveWifi-div").show();
+            $("#NoWifi-div").hide();
+        }
+        else {
+            $("#HaveWifi-div").hide();
+            $("#NoWifi-div").show();
+        }
+        if (w11acAPEnable == "1") {
+            $("#HaveWifi11ac-div").show();
+            $("#NoWifi11ac-div").hide();
+        }
+        else {
+            $("#HaveWifi11ac-div").hide();
+            $("#NoWifi11ac-div").show();
+        }
+
+        display_wifi();
+        display_wifi11ac();
+        // doWEPChange();
+        // doWEPChange_11ac();
+        ShowBandSteering(1);
+    }
+
+
+    /* Common functions */
+    function onloadCheck() {
+        onloadCheck_wifi();
+    }
+    function has_config_wifi() {
+        if (wSSIDEnable != $("#Enable_AccessPoint").val()) {
+            return true;// always failed because of using button to switch status
+        }
+        if (wAPEnable == "1") {
+            if (wSSID != $("#ESSID").val()) {
+                return true;
+            }
+            if (wAuthType != $("#WEP_Selection").val()) {
+                return true;
+            }
+            if (wAuthType != "OPEN") {
+                if (wPSK != $("#PreSharedKey").val()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    function has_config_wifi11ac() {
+        if (w11acSSIDEnable != $("#wlan11ac_APenable").val()) {
+            return true;// always failed because of using button to switch status
+        }
+        if (w11acAPEnable == "1") {
+            if (w11acSSID != $("#ESSID11AC").val()) {
+                return true;
+            }
+            if (w11acAuthType != $("#WEP_Selection_11ac").val()) {
+                return true;
+            }
+            if (w11acAuthType != "OPEN") {
+                if (w11acPSK != $("#PreSharedKey11AC").val()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function has_config_bndstr() {
+        /* check if band steering button has transformed to different status */
+        if ($("#Band_Steering_En").val() != bandstrEnable)
+            return true;
+        else
+            return false;
+    }
+    
+    function quotationCheck(str, limit_len) {
+        var len = str.length;
+        var c;
+        var i, j = 0;
+        for (i = 0; i < len; i++)
+        {
+            var c = str.charAt(i);
+
+            if (c == '"')
+            {
+                j += 6;
+            }
+            else
+                j++;
+        }
+        if (j > limit_len-1)
+        {
+            alert("too many quotation mark!");
+            return true;
+        }
+        return false;
+    }
+    
+    
+    function strESSIDCheck(str) {
+        if(str.match(/[^\x00-\xff]/g)){
+            alert("Invalid SSID Input!");
+            return true;
+        }
+        if(str.length <= 0){
+            alert("SSID is emprty!");
+            return true;
+        }
+        return false;
+    }
+    
+    function doHexCheck(c) {
+        if(c >= "0" && c <= "9")
+            return 1;
+        if(c >= "A" && c <= "Z")
+            return 1;
+        if(c >= "a" && c <= "z")
+            return 1;
+        return -1;
+    }
+
+    function wpapskCheck(str) {
+        var keyvalue=str;
+        var wpapsklen=str.length;
+
+        if(wpapsklen >= 8 && wpapsklen < 64) {
+            if(keyvalue.match(/[^\x00-\xff]/g))
+            {
+                alert("Pre-Shared Key should be between 8 and 63 ASCII characters or 64 Hex strings");
+                return true;
+
+            }
+        }else if(wpapsklen==64){
+            for(i=0;i<64;i++){
+                var c=keyvalue.charAt(i);
+                if(doHexCheck(c)<0){
+                    alert("Pre-Shared Key Hex value error");
+                    return true;
+                }
+            }
+        }else {
+
+            alert("Pre-Shared Key should be between 8 and 63 ASCII characters or 64 Hex strings");
+            return true;
+        }
+        return false;
+    }	
+    function doSubmit() {
+        /* WiFi Widget */
+        var form = document.getElementById("bandsteering_form");
+
+        if (hide_wifi == 0) {
+            if (has_config_bndstr()) {
+                $('input[name="bndstrflg"]').val('1');
+                $('input[name="wififlg"]').val('1');
+            }
+            if (has_config_wifi()) {
+                if ($("#Enable_AccessPoint").val() == "1") {
+                    // wifi 2.4 up
+                    // validate SSID and Passwords
+                    if(quotationCheck($("#ESSID").val(), 193)||strESSIDCheck($("#ESSID").val())) {
+                        $("#ESSID").focus();
+                        return false;
+                    }
+                    if ($("#WEP_Selection").val() != "OPEN") {
+                        if (wpapskCheck($("#PreSharedKey").val()))
+                            return false;
+
+                        if(quotationCheck($("#PreSharedKey").val(), 385))
+                            return false;
+                    }
+                }
+                $('input[name="wififlg"]').val('1');
+            }
+            if ($("#Band_Steering_En").prop("checked") != true) {	
+                if (has_config_wifi11ac()) {
+                    // wifi 5 up
+                    // validate SSID and Passwords
+                    if ($("#wlan11ac_APenable").val() == "1") {
+                        if(quotationCheck($("#ESSID11AC").val(), 193)||strESSIDCheck($("#ESSID11AC").val())) {
+                            $("#ESSID11AC").focus();
+                            return false;
+                        }
+                        if ($("#WEP_Selection_11ac").val() != "OPEN") {
+                            if (wpapskCheck($("#PreSharedKey11AC").val()))
+                                return false;
+
+                            if(quotationCheck($("#PreSharedKey11AC").val(), 385))
+                                return false;
+                        }
+                    }
+                    $('input[name="wifi11acflg"]').val('1');
+                }
+            }
+        }
+        else {// hide_wifi =1 
+            document.getElementById("wififlg").value = "0";
+            document.getElementById("wifi11acflg").value = "0";
+            document.getElementById("bndstrflg").value = "0";
+        }
+        
+        form[0].submit();
+    }
+
+    
+    function get_apply_status_cb(rsp)
+    {
+        try{
+            var r = JSON.parse(rsp);
+        }
+        catch(e){
+            return;
+        }
+        if(r.status == "ON_PROGRESS"){
+            var u = confirm("Device is applying the saved settings now!\n" +
+                "It is recommended to wait until all the saved settings are applied.\n" +
+                "Please click on 'OK' button to wait for the device.\n" +
+                "or click on 'Cancel' button to configure the settings available in current web-page.");
+            if (u == true) {
+                location = '<%=luci.dispatcher.build_url("admin", "mtk", "wifi", "loading")%>' + window.location.pathname;
+            }
+        }
+    }
+
+    function get_apply_status()
+    {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "mtk", "wifi", "get_apply_status")%>', null,
+            function(x)
+            {
+                console.log(x);
+                get_apply_status_cb(x.response);
+            }
+        );
+    }
+
+    window.onload = function(){
+        MonCon.ping();
+        get_apply_status();
+        console.log("duyhh2:1");
+        onloadCheck();
+        console.log("duyhh2:1");
+        <% if map_cfgs.MapEnable == "1" then %>
+            AuthMode_onchange("WPA2PSK",1);
+            console.log("duyhh2:3");
+            AuthMode_onchange("WPA2PSK",2);
+        <% else %>
+            AuthMode_onchange(document.getElementById("WEP_Selection").options[document.getElementById("WEP_Selection").selectedIndex].value,1);
+            console.log("duyhh2:4");
+            AuthMode_onchange(document.getElementById("WEP_Selection_11ac").options[document.getElementById("WEP_Selection_11ac").selectedIndex].value,2);
+        <% end %>
+        // check_update_easymesh_profile();
+    }
+</script>
+<%+footer%>

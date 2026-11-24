@@ -1,0 +1,3 @@
+config lighttpd 'main'
+    option listen_http '80'
+    option listen_https '443'
